@@ -10,11 +10,12 @@ exports.info = async function(url, filename){
 
   filename == null? filename = "video_info":null;
 
-  fs.writeFile('./bin/'+ filename +'.txt', info, err =>{
+  await fs.writeFile('./test/'+ filename +'.json', JSON.stringify(info, null, 2), err =>{
     if(err){
       console.error(err);
     }
     return
   });
-  console.log('Link\'s info can be found in: /bin/'+filename+'.txt');
+  const title = info.player_response.videoDetails.title;
+  console.log(title +'\'s info can be found in: /test/'+filename+'.json');
 }

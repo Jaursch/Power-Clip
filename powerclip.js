@@ -3,16 +3,22 @@ const prompt = require('prompt-sync')();
 
 console.log("\nWelcome to PowerClip! Let's get this party started!\n");
 
-const url = prompt('Enter youtube url: ');
+var url = prompt('Enter youtube url: ');
+
+//test url
+url? null: url = 'https://www.youtube.com/watch?v=nbXgHAzUWB0';
 
 console.log('validating url: ' + url);
 
 const validated = s.validate(url);
-
 validated == true ? console.log('good url!') : console.log('bad url!');
 
 if (validated == true) {
-  const ytInfoFile = prompt('Enter a filename to store YT info: ');
+  var ytInfoFile = prompt('Enter a filename to store YT info: ');
+
+  //test name
+  ytInfoFile? null:ytInfoFile='sunisshining';
+
   s.info(url, ytInfoFile);
 
 }

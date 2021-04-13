@@ -1,3 +1,8 @@
+#Added Files
+
+test/
+
+#Below is standard node.js gitignore
 # Logs
 logs
 *.log
