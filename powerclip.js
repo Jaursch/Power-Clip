@@ -14,11 +14,9 @@ const validated = s.validate(url);
 validated == true ? console.log('good url!') : console.log('bad url!');
 
 if (validated == true) {
-  var ytInfoFile = prompt('Enter a filename to store YT info: ');
 
-  //test name
-  ytInfoFile? null:ytInfoFile='sunisshining';
+  const filepath = s.info(url);
+  console.log('Video\'s data can be found at: ' + filepath);
 
-  s.info(url, ytInfoFile);
-
+  s.downloadSingle(url);
 }
