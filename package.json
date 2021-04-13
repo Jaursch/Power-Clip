@@ -1,0 +1,25 @@
+{
+  "name": "power-clip",
+  "version": "1.0.0",
+  "description": "",
+  "main": "service.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jaursch/Power-Clip.git"
+  },
+  "author": "Burton Jaursch",
+  "license": "SEE LICENSE IN LICENSE",
+  "bugs": {
+    "url": "https://github.com/Jaursch/Power-Clip/issues"
+  },
+  "homepage": "https://github.com/Jaursch/Power-Clip#readme",
+  "dependencies": {
+    "fs": "0.0.1-security",
+    "prompt-sync": "^4.2.0",
+    "yargs": "^16.2.0",
+    "ytdl-core": "^4.5.0"
+  }
+}
