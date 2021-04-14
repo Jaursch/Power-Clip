@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/Jaursch/Power-Clip#readme",
   "dependencies": {
+    "ffmpeg-static": "^4.3.0",
     "fs": "0.0.1-security",
     "prompt-sync": "^4.2.0",
     "yargs": "^16.2.0",
