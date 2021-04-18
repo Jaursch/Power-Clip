@@ -15,6 +15,13 @@ case 'standard':
   s.downloadSingle(url);
 
   break;
+case 'clip':
+  const startTime = prompt('Enter a start time: ');
+  const secLength = prompt('How many seconds?: ');
+
+  s.clipVideo(startTime, secLength);
+
+  break;
 default:
   var url = singleURL();
 

@@ -7,6 +7,57 @@ const help = require('./helpers');
 
 const STREAM_MSG = '[MSG DURING STREAM] ';
 
+const tracker = {
+  start: Date.now(),
+  audio: { downloaded: 0, total: Infinity },
+  video: { downloaded: 0, total: Infinity },
+  merged: { frame: 0, speed: '0x', fps: 0 },
+};
+
+
+const showProgress = () => {
+  readline.cursorTo(process.stdout, 0);
+  const toMB = i => (i / 1024 / 1024).toFixed(2);
+
+  process.stdout.write(`Audio  | ${(tracker.audio.downloaded / tracker.audio.total * 100).toFixed(2)}% processed `);
+  process.stdout.write(`(${toMB(tracker.audio.downloaded)}MB of ${toMB(tracker.audio.total)}MB).${' '.repeat(10)}\n`);
+
+  process.stdout.write(`Video  | ${(tracker.video.downloaded / tracker.video.total * 100).toFixed(2)}% processed `);
+  process.stdout.write(`(${toMB(tracker.video.downloaded)}MB of ${toMB(tracker.video.total)}MB).${' '.repeat(10)}\n`);
+
+  process.stdout.write(`Merged | processing frame ${tracker.merged.frame} `);
+  process.stdout.write(`(at ${tracker.merged.fps} fps => ${tracker.merged.speed}).${' '.repeat(10)}\n`);
+
+  process.stdout.write(`running for: ${((Date.now() - tracker.start) / 1000 / 60).toFixed(2)} Minutes.`);
+  readline.moveCursor(process.stdout, 0, -3);
+};
+
+exports.clipVideo = function (startTime, length) {
+  console.log('start clipping');
+  startTime = '30.0';
+
+  const ffmpegProcess = cp.spawn(ffmpeg, [
+    '-loglevel', '8', '-hide_banner',
+
+    '-ss', startTime,
+
+    '-i', './bin/out1.mp4',
+
+    '-c', 'copy',
+    //duration of cut, default 60
+    '-t',length,
+    //output file
+    './bin/cliped_out1.mp4'
+
+  ], {
+    windowsHide: true
+  });
+
+  ffmpegProcess.on('close', () => {
+    console.log('clipping done');
+  })
+}
+
 //validates url of YouTube video
 exports.validate = function (url){
   return ytdl.validateURL(url)
@@ -54,13 +105,6 @@ exports.downloadSingle = function(url){
 }
 
 exports.downloadSingleHD = function(url){
-  const tracker = {
-    start: Date.now(),
-    audio: { downloaded: 0, total: Infinity },
-    video: { downloaded: 0, total: Infinity },
-    merged: { frame: 0, speed: '0x', fps: 0 },
-  };
-
   // Get audio and video streams
   const audio = ytdl(url, { quality: 'highestaudio' })
     .on('progress', (_, downloaded, total) => {
@@ -74,22 +118,8 @@ exports.downloadSingleHD = function(url){
   // Prepare the progress bar
   let progressbarHandle = null;
   const progressbarInterval = 1000;
-  const showProgress = () => {
-    readline.cursorTo(process.stdout, 0);
-    const toMB = i => (i / 1024 / 1024).toFixed(2);
 
-    process.stdout.write(`Audio  | ${(tracker.audio.downloaded / tracker.audio.total * 100).toFixed(2)}% processed `);
-    process.stdout.write(`(${toMB(tracker.audio.downloaded)}MB of ${toMB(tracker.audio.total)}MB).${' '.repeat(10)}\n`);
-
-    process.stdout.write(`Video  | ${(tracker.video.downloaded / tracker.video.total * 100).toFixed(2)}% processed `);
-    process.stdout.write(`(${toMB(tracker.video.downloaded)}MB of ${toMB(tracker.video.total)}MB).${' '.repeat(10)}\n`);
-
-    process.stdout.write(`Merged | processing frame ${tracker.merged.frame} `);
-    process.stdout.write(`(at ${tracker.merged.fps} fps => ${tracker.merged.speed}).${' '.repeat(10)}\n`);
-
-    process.stdout.write(`running for: ${((Date.now() - tracker.start) / 1000 / 60).toFixed(2)} Minutes.`);
-    readline.moveCursor(process.stdout, 0, -3);
-  };
+  //create bin folder?
 
   // Start the ffmpeg child process
   const ffmpegProcess = cp.spawn(ffmpeg, [
@@ -106,7 +136,7 @@ exports.downloadSingleHD = function(url){
     // Keep encoding
     '-c:v', 'copy',
     // Define output file
-    'out.mp4',
+    './bin/out1.mp4',
   ], {
     windowsHide: true,
     stdio: [
@@ -121,6 +151,11 @@ exports.downloadSingleHD = function(url){
     // Cleanup
     process.stdout.write('\n\n\n\n');
     clearInterval(progressbarHandle);
+
+    const startTime = '40';
+    const secLength = '60';
+
+    exports.clipVideo(startTime, secLength);
   });
 
   // Link streams

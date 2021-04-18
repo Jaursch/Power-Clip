@@ -1,6 +1,7 @@
 #Added Files
 
-test/
+test/*
+bin/*
 
 #Below is standard node.js gitignore
 # Logs
