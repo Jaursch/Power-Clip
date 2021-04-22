@@ -49,11 +49,21 @@ default:
 
   for (var i =0; i<2; i++){
     songs.push({url: promptURL(i)});
-    songs[i].startTime = prompt('Enter the start time of the video\'s clip: ');
-    songs[i].length = prompt('How long should this clip be: ');
+    songs[i].startTime = prompt('Enter the start time of the video\'s clip (default 0:45): ');
+    songs[i].startTime? null : songs[i].startTime = '0:45';
+    songs[i].length = prompt('How long should this clip be (default 60[seconds]): ');
+    songs[i].length? null : songs[i].length = '60'
+  }
+  console.log(JSON.stringify(songs));
+
+  //doesn't take start time & clip length
+  //console.log(songs.length);
+  for(var i=0; i<songs.length; i++){
+    console.log(songs[i].url);
+    console.log(i);
+    s.downloadSingleHD(songs[i].url, i)
   }
 
-  console.log(JSON.stringify(songs));
 
   break;
 }

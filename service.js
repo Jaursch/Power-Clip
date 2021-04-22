@@ -30,8 +30,10 @@ const showProgress = () => {
   readline.moveCursor(process.stdout, 0, -3);
 };
 
-exports.clipVideo = function (startTime, length) {
-  const outputFile = './bin/cliped_out1.mp4';
+exports.clipVideo = function (startTime, length, index) {
+  console.log('index', index);
+  !(index==null)?null:index='00'
+  let outputFile = `./bin/cliped_out${index}.mp4`;
 
   help.deleteIfExists(outputFile);
 
@@ -44,7 +46,7 @@ exports.clipVideo = function (startTime, length) {
 
     '-ss', startTime,
 
-    '-i', './bin/out1.mp4',
+    '-i', `./bin/out${index}.mp4`,
 
     '-c', 'copy',
     //duration of cut, default 60
@@ -57,7 +59,7 @@ exports.clipVideo = function (startTime, length) {
   });
 
   ffmpegProcess.on('close', () => {
-    console.log('clipping done');
+    console.log('clipping done for path: ', outputFile);
   })
 }
 
@@ -107,7 +109,10 @@ exports.downloadSingle = function(url){
             })
 }
 
-exports.downloadSingleHD = function(url){
+exports.downloadSingleHD = function(url, index){
+  !(index==null)? null:index=00;
+  let path = `./bin/out${index}.mp4`;
+
   // Get audio and video streams
   const audio = ytdl(url, { quality: 'highestaudio' })
     .on('progress', (_, downloaded, total) => {
@@ -122,9 +127,7 @@ exports.downloadSingleHD = function(url){
   let progressbarHandle = null;
   const progressbarInterval = 1000;
 
-  //create bin folder?
-  
-  help.deleteIfExists('./bin/out1.mp4');
+  help.deleteIfExists(`./bin/out${index}.mp4`);
 
   // Start the ffmpeg child process
   const ffmpegProcess = cp.spawn(ffmpeg, [
@@ -141,7 +144,7 @@ exports.downloadSingleHD = function(url){
     // Keep encoding
     '-c:v', 'copy',
     // Define output file
-    './bin/out1.mp4',
+    path,
   ], {
     windowsHide: true,
     stdio: [
@@ -159,7 +162,7 @@ exports.downloadSingleHD = function(url){
     const startTime = '40';
     const secLength = '60';
 
-    exports.clipVideo(startTime, secLength);
+    exports.clipVideo(startTime, secLength, index);
   });
 
   // Link streams

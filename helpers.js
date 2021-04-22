@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-exports.DEF_VID_PATH = './bin/out1.mp4';
+exports.DEF_VID_PATH = './bin/out00.mp4';
 
 //replaces extra chars w/ underscore
 exports.replace = function (link){
