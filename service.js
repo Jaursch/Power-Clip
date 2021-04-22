@@ -123,6 +123,8 @@ exports.downloadSingleHD = function(url){
   const progressbarInterval = 1000;
 
   //create bin folder?
+  
+  help.deleteIfExists('./bin/out1.mp4');
 
   // Start the ffmpeg child process
   const ffmpegProcess = cp.spawn(ffmpeg, [
