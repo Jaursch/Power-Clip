@@ -1,5 +1,8 @@
 const s = require('./service');
+const help = require('./helpers');
 const prompt = require('prompt-sync')();
+const fs = require('fs');
+
 
 console.log("\nWelcome to PowerClip! Let's get this party started!\n");
 
@@ -16,16 +19,26 @@ case 'standard':
 
   break;
 case 'clip':
-  const startTime = prompt('Enter a start time: ');
-  const secLength = prompt('How many seconds?: ');
+  const out1_path = help.DEF_VID_PATH;
+  const exists = help.exists(out1_path);
 
-  s.clipVideo(startTime, secLength);
+  console.log('Default clip will be taken from '+help.DEF_VID_PATH+' \n');
+
+  if (exists) {
+
+    const startTime = prompt('Enter a start time: ');
+    const secLength = prompt('How many seconds?: ');
+
+    s.clipVideo(startTime, secLength);
+  }else
+    console.log(help.DEF_VID_PATH+' does not exist. Cannot use default clip');
 
   break;
 default:
   var url = singleURL();
 
   s.downloadSingleHD(url);
+  break;
 }
 
 //prompts for a url and then returns it if a valid YT link

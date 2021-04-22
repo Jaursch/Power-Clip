@@ -13,8 +13,6 @@ const tracker = {
   video: { downloaded: 0, total: Infinity },
   merged: { frame: 0, speed: '0x', fps: 0 },
 };
-
-
 const showProgress = () => {
   readline.cursorTo(process.stdout, 0);
   const toMB = i => (i / 1024 / 1024).toFixed(2);
@@ -33,8 +31,13 @@ const showProgress = () => {
 };
 
 exports.clipVideo = function (startTime, length) {
+  const outputFile = './bin/cliped_out1.mp4';
+
+  help.deleteIfExists(outputFile);
+
   console.log('start clipping');
-  startTime = '30.0';
+  if(!startTime)
+    startTime = '30.0';
 
   const ffmpegProcess = cp.spawn(ffmpeg, [
     '-loglevel', '8', '-hide_banner',
@@ -47,7 +50,7 @@ exports.clipVideo = function (startTime, length) {
     //duration of cut, default 60
     '-t',length,
     //output file
-    './bin/cliped_out1.mp4'
+    outputFile
 
   ], {
     windowsHide: true
@@ -147,7 +150,6 @@ exports.downloadSingleHD = function(url){
     ],
   });
   ffmpegProcess.on('close', () => {
-    console.log('done');
     // Cleanup
     process.stdout.write('\n\n\n\n');
     clearInterval(progressbarHandle);
