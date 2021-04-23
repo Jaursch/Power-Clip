@@ -7,6 +7,7 @@ const fs = require('fs');
 // url:string,
 // startTime:Date,
 // length:seconds
+// ready:bool
 const songs = [];
 
 console.log("\nWelcome to PowerClip! Let's get this party started!\n");
@@ -49,10 +50,14 @@ default:
 
   for (var i =0; i<2; i++){
     songs.push({url: promptURL(i)});
+
     songs[i].startTime = prompt('Enter the start time of the video\'s clip (default 0:45): ');
     songs[i].startTime? null : songs[i].startTime = '0:45';
+
     songs[i].length = prompt('How long should this clip be (default 60[seconds]): ');
     songs[i].length? null : songs[i].length = '60'
+
+    songs[i].ready = false;
   }
   console.log(JSON.stringify(songs));
 
@@ -61,7 +66,8 @@ default:
   for(var i=0; i<songs.length; i++){
     console.log(songs[i].url);
     console.log(i);
-    s.downloadSingleHD(songs[i].url, i)
+    //will return a promise. Once that promis is 'true' then we combine vids
+    songs[i].ready = s.prepClip(songs[i], i);
   }
 
 

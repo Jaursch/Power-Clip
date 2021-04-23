@@ -30,14 +30,12 @@ const showProgress = () => {
   readline.moveCursor(process.stdout, 0, -3);
 };
 
-exports.clipVideo = function (startTime, length, index) {
-  console.log('index', index);
+exports.clipVideo = async function (startTime, length, index) {
   !(index==null)?null:index='00'
   let outputFile = `./bin/cliped_out${index}.mp4`;
 
   help.deleteIfExists(outputFile);
 
-  console.log('start clipping');
   if(!startTime)
     startTime = '30.0';
 
@@ -98,7 +96,7 @@ exports.downloadSingle = function(url){
               title = help.replace(info.videoDetails.title);
 
               const fileType = format.container;
-              const writeStream = fs.createWriteStream(`${title}.${fileType}`);
+              const writeStream = fs.createWriteStream(`./bin/${title}.${fileType}`);
 
               readStream.pipe(writeStream);
             })
@@ -179,6 +177,55 @@ exports.downloadSingleHD = function(url, index){
     }
     tracker.merged = args;
   });
+  audio.pipe(ffmpegProcess.stdio[4]);
+  video.pipe(ffmpegProcess.stdio[5]);
+}
+
+//Downloads video and sends video off to be clipped
+exports.prepClip = function(song, index){
+  let path = `./bin/vid${index}.mp4`;
+
+  // Get audio and video streams
+  const audio = ytdl(song.url, { quality: 'highestaudio' });
+  const video = ytdl(song.url, { quality: 'highestvideo' });
+
+  help.deleteIfExists(path);
+
+  // Start the ffmpeg child process
+  const ffmpegProcess = cp.spawn(ffmpeg, [
+    // Remove ffmpeg's console spamming
+    '-loglevel', '8', '-hide_banner',
+    // Redirect/Enable progress messages
+    '-progress', 'pipe:3',
+    // Set inputs
+    '-i', 'pipe:4',
+    '-i', 'pipe:5',
+    // Map audio & video from streams
+    '-map', '0:a',
+    '-map', '1:v',
+    // Keep encoding
+    '-c:v', 'copy',
+    // Define output file
+    path,
+  ], {
+    windowsHide: true,
+    stdio: [
+      /* Standard: stdin, stdout, stderr */
+      'inherit', 'inherit', 'inherit',
+      /* Custom: pipe:3, pipe:4, pipe:5 */
+      'pipe', 'pipe', 'pipe',
+    ],
+  });
+  ffmpegProcess.on('close', () => {
+    const startTime = song.startTime;
+    const secLength = song.length;
+
+    exports.clipVideo(startTime, secLength, index);
+    return `video for song ${song.url} created`;
+  });
+
+  // Link streams
+  // FFmpeg creates the transformer streams and we just have to insert / read data
   audio.pipe(ffmpegProcess.stdio[4]);
   video.pipe(ffmpegProcess.stdio[5]);
 }
