@@ -30,3 +30,12 @@ exports.exists = function(path){
       console.log('ERR - exists: ' + err);
   }
 }
+
+exports.waitTillReady = function(songs){
+  for(var i=0;i<songs.length; i++){
+    if(songs[i].ready==false){
+      setTimeout(waitTillReady(songs),5000);
+      break;
+    }
+  }
+}

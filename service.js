@@ -30,7 +30,7 @@ const showProgress = () => {
   readline.moveCursor(process.stdout, 0, -3);
 };
 
-exports.clipVideo = async function (startTime, length, index) {
+exports.clipVideo = function (startTime, length, index) {
   !(index==null)?null:index='00'
   let outputFile = `./bin/cliped_out${index}.mp4`;
 
@@ -182,7 +182,7 @@ exports.downloadSingleHD = function(url, index){
 }
 
 //Downloads video and sends video off to be clipped
-exports.prepClip = function(song, index){
+exports.prepClip = async function(song, index){
   let path = `./bin/vid${index}.mp4`;
 
   // Get audio and video streams
@@ -216,12 +216,13 @@ exports.prepClip = function(song, index){
       'pipe', 'pipe', 'pipe',
     ],
   });
-  ffmpegProcess.on('close', () => {
+  ffmpegProcess.on('close', async () => {
     const startTime = song.startTime;
     const secLength = song.length;
 
-    exports.clipVideo(startTime, secLength, index);
-    return `video for song ${song.url} created`;
+    await exports.clipVideo(startTime, secLength, index);
+    console.log('in prepClip: clip video done returning true to promise');
+    return true;
   });
 
   // Link streams

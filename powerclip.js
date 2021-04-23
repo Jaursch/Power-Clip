@@ -70,6 +70,10 @@ default:
     songs[i].ready = s.prepClip(songs[i], i);
   }
 
+  //wait until all songs are ready to be commbined
+  help.waitTillReady(songs)
+
+  console.log('we\'re ready!!');
 
   break;
 }
