@@ -75,7 +75,7 @@ exports.info = async function(url){
   const filename = help.replace(title);
 
   //create file path from filename
-  const filepath = filename == null? './test/video_info.json':'./test/'+filename+'.json';
+  const filepath = filename == null? './bin/video_info.json':'./bin/'+filename+'.json';
 
   await fs.writeFile(filepath, JSON.stringify(info, null, 2), err =>{
     if(err){
