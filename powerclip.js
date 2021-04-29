@@ -1,14 +1,31 @@
-const s = require('./service');
-const help = require('./helpers');
 const prompt = require('prompt-sync')();
 const fs = require('fs');
+const s = require('./service');
+const help = require('./helpers');
+const videos = require('./videos');
 
-//songs struct
-// url:string,
-// startTime:Date,
-// length:seconds
-// ready:bool
-const songs = [];
+//prompts for a url and then returns it if a valid YT link
+//index is an optional param
+function promptURL(index=null){
+  //console.log('index: '+index+'\nindex null? '+(index===null)+'\nindex blank? ' + (index==""));
+  let index_txt = !(index==null)? ' for video #' + (index+1) : '';
+
+  let url = prompt(`Enter YouTube URL${index_txt}: `);
+  let validated = false;
+
+  //Make sure user gives a valid url
+  do{
+    url? null: url = 'https://www.youtube.com/watch?v=nbXgHAzUWB0';
+
+    validated = s.validate(url);
+
+    if(!validated){
+      console.log('Invalid URL!\n');
+      url = prompt('Try a valid YouTube URL: ');
+    }
+  }while(!validated)
+  return url;
+}
 
 console.log("\nWelcome to PowerClip! Let's get this party started!\n");
 
@@ -49,53 +66,27 @@ default:
   console.log('We are now going to combine two clipped YouTube videos');
 
   for (var i =0; i<2; i++){
-    songs.push({url: promptURL(i)});
+    let url = promptURL(i);
+    let startTime = prompt('Enter the start time of the video\'s clip (default 0:45): ');
+    let length = prompt('How long should this clip be (default 60[seconds]): ');
 
-    songs[i].startTime = prompt('Enter the start time of the video\'s clip (default 0:45): ');
-    songs[i].startTime? null : songs[i].startTime = '0:45';
-
-    songs[i].length = prompt('How long should this clip be (default 60[seconds]): ');
-    songs[i].length? null : songs[i].length = '60'
-
-    songs[i].ready = false;
+    videos.create(url, startTime, length);
   }
-  console.log(JSON.stringify(songs));
+  console.log(JSON.stringify(videos.getAll()));
 
   //doesn't take start time & clip length
   //console.log(songs.length);
-  for(var i=0; i<songs.length; i++){
-    console.log(songs[i].url);
+  for(var i=0; i<videos.count(); i++){
+    console.log(videos.getUrl(i));
     console.log(i);
     //will return a promise. Once that promis is 'true' then we combine vids
-    songs[i].ready = s.prepClip(songs[i], i);
+    s.prepClip(i);
   }
 
   //wait until all songs are ready to be commbined
-  help.waitTillReady(songs)
+  help.waitTillReady()
 
   console.log('we\'re ready!!');
 
   break;
-}
-
-//prompts for a url and then returns it if a valid YT link
-function promptURL(index){
-  //console.log('index: '+index+'\nindex null? '+(index===null)+'\nindex blank? ' + (index==""));
-  let index_txt = !(index==null)? ' for video #' + (index+1) : '';
-
-  let url = prompt(`Enter YouTube URL${index_txt}: `);
-  let validated = false;
-
-  do{
-    //test url
-    url? null: url = 'https://www.youtube.com/watch?v=nbXgHAzUWB0';
-
-    validated = s.validate(url);
-
-    if(!validated){
-      console.log('Invalid URL!\n');
-      url = prompt('Try a valid YouTube URL: ');
-    }
-  }while(!validated)
-  return url;
 }

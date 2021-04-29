@@ -1,4 +1,5 @@
 const fs = require('fs');
+const videos = require('./videos');
 
 exports.DEF_VID_PATH = './bin/out00.mp4';
 
@@ -31,11 +32,10 @@ exports.exists = function(path){
   }
 }
 
-exports.waitTillReady = function(songs){
-  for(var i=0;i<songs.length; i++){
-    if(songs[i].ready==false){
-      setTimeout(waitTillReady(songs),5000);
-      break;
-    }
+exports.waitTillReady = function(){
+  if(videos.allReady()==false){
+    setTimeout(exports.waitTillReady(),5000);
+  }else{
+    console.log('actually all ready!');
   }
 }

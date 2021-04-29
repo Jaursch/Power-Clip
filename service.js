@@ -4,6 +4,7 @@ const ffmpeg = require('ffmpeg-static');
 const cp = require('child_process');
 const readline = require('readline');
 const help = require('./helpers');
+const videos = require('./videos');
 
 const STREAM_MSG = '[MSG DURING STREAM] ';
 
@@ -29,37 +30,6 @@ const showProgress = () => {
   process.stdout.write(`running for: ${((Date.now() - tracker.start) / 1000 / 60).toFixed(2)} Minutes.`);
   readline.moveCursor(process.stdout, 0, -3);
 };
-
-exports.clipVideo = function (startTime, length, index) {
-  !(index==null)?null:index='00'
-  let outputFile = `./bin/cliped_out${index}.mp4`;
-
-  help.deleteIfExists(outputFile);
-
-  if(!startTime)
-    startTime = '30.0';
-
-  const ffmpegProcess = cp.spawn(ffmpeg, [
-    '-loglevel', '8', '-hide_banner',
-
-    '-ss', startTime,
-
-    '-i', `./bin/out${index}.mp4`,
-
-    '-c', 'copy',
-    //duration of cut, default 60
-    '-t',length,
-    //output file
-    outputFile
-
-  ], {
-    windowsHide: true
-  });
-
-  ffmpegProcess.on('close', () => {
-    console.log('clipping done for path: ', outputFile);
-  })
-}
 
 //validates url of YouTube video
 exports.validate = function (url){
@@ -103,10 +73,11 @@ exports.downloadSingle = function(url){
             .on('progress',(_,downloaded,total) =>{
               const percent = (downloaded/total*100).toFixed(1);
               if(percent % 5 == 0) //print log every 5%
-                console.log('Progress: ' +  percent +'%\t'+ 'downloaded: '+ downloaded +'\t'+ 'total: ' + total);
+                console.log(`Progress: ${percent}%\t downloaded: ${downloaded}\t total: ${total}`);
             })
 }
 
+// TODO: Currently depreciated- does not work w/ videos object
 exports.downloadSingleHD = function(url, index){
   !(index==null)? null:index=00;
   let path = `./bin/out${index}.mp4`;
@@ -160,7 +131,7 @@ exports.downloadSingleHD = function(url, index){
     const startTime = '40';
     const secLength = '60';
 
-    exports.clipVideo(startTime, secLength, index);
+    exports.clipVideo(index, startTime, secLength);
   });
 
   // Link streams
@@ -181,13 +152,47 @@ exports.downloadSingleHD = function(url, index){
   video.pipe(ffmpegProcess.stdio[5]);
 }
 
-//Downloads video and sends video off to be clipped
-exports.prepClip = async function(song, index){
+exports.clipVideo = function (index, startTime, length) {
+  !(index==null)?null:index='00'
+  let outputPath = `./bin/cliped_out${index}.mp4`;
+
+  help.deleteIfExists(outputPath);
+
+  if(!startTime)
+  startTime = '30.0';
+
+  const ffmpegProcess = cp.spawn(ffmpeg, [
+    '-loglevel', '8', '-hide_banner',
+
+    '-ss', startTime,
+
+    '-i', `./bin/out${index}.mp4`,
+
+    '-c', 'copy',
+    //duration of cut, default 60
+    '-t',length,
+    //output file
+    outputPath
+
+  ], {
+    windowsHide: true
+  });
+
+  ffmpegProcess.on('close', () => {
+    console.log('clipping done for path: ', outputPath);
+    videos.setAudioPath(index, outputPath);
+    videos.setReady(index);
+  })
+}
+
+//Downloads video from given video object index and sends video off to be clipped
+exports.prepClip = async function(index){
   let path = `./bin/vid${index}.mp4`;
+  let video_info = videos.getVideo(index);
 
   // Get audio and video streams
-  const audio = ytdl(song.url, { quality: 'highestaudio' });
-  const video = ytdl(song.url, { quality: 'highestvideo' });
+  const audio = ytdl(video_info.url, { quality: 'highestaudio' });
+  const video = ytdl(video_info.url, { quality: 'highestvideo' });
 
   help.deleteIfExists(path);
 
@@ -216,13 +221,10 @@ exports.prepClip = async function(song, index){
       'pipe', 'pipe', 'pipe',
     ],
   });
-  ffmpegProcess.on('close', async () => {
-    const startTime = song.startTime;
-    const secLength = song.length;
-
-    await exports.clipVideo(startTime, secLength, index);
-    console.log('in prepClip: clip video done returning true to promise');
-    return true;
+  ffmpegProcess.on('close', () => {
+    videos.setVideoPath(index, path);
+    // TODO: Change this below
+    exports.clipVideo(index, videos.getStartTime(index), videos.getLength(index));
   });
 
   // Link streams

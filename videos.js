@@ -3,6 +3,8 @@
 //relevant link: https://stackoverflow.com/questions/3922994/share-variables-between-files-in-node-js
 //Scenario #3
 
+const h = require('./helpers');
+
 // url:string,
 // startTime:Date,
 // length:seconds - how long it should be
@@ -32,6 +34,7 @@ exports.count = function(){
   return videos.length;
 }
 
+//adds video info to array and returns index
 exports.create = function(url, startTime='0:45', length='60'){
   videos.push({url:url,
                startTime: startTime,
@@ -58,8 +61,32 @@ exports.getUrl = function(index){
   return videos[index].url
 }
 
+exports.getStartTime = function(index){
+  return videos[index].startTime;
+}
+
+exports.getLength = function(index){
+  return videos[index].length;
+}
+
 exports.setUrl = function(index, url){
   videos[index].url = url;
+}
+
+exports.setVideoPath = function(index, path){
+  if(h.exists(path)){
+    videos[index].videoPath = path;
+  }else{
+    throw 'Given video path does not exist';
+  }
+}
+
+exports.setAudioPath = function(index, path){
+  if(h.exists(path)){
+    videos[index].audioPath = path;
+  }else{
+    throw 'Given audio path does not exist';
+  }
 }
 
 exports.setReady = function(index, ready=true){
