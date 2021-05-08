@@ -12,9 +12,9 @@ exports.replace = function (link){
 exports.deleteIfExists = function(path){
   try{
     if(fs.existsSync(path)){
-      console.log('deleting');
+      console.log(`Deleting file at: ${path}`);
       fs.unlinkSync(path);
-      console.log(path + 'deleted')
+      console.log(path + ' deleted')
     }
   }catch(err){
     console.log('ERR - deleteIfExists: ' + err);
@@ -32,9 +32,10 @@ exports.exists = function(path){
   }
 }
 
-exports.waitTillReady = function(){
+//maximum call stack DONT USE
+exports.waitTillReady = async function(){
   if(videos.allReady()==false){
-    setTimeout(exports.waitTillReady(),5000);
+    setTimeout(exports.waitTillReady, 5000);
   }else{
     console.log('actually all ready!');
   }

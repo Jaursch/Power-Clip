@@ -4,6 +4,8 @@ const s = require('./service');
 const help = require('./helpers');
 const videos = require('./videos');
 
+const STD_MSG = '[MSG powerclip] ';
+
 //prompts for a url and then returns it if a valid YT link
 //index is an optional param
 function promptURL(index=null){
@@ -77,16 +79,10 @@ default:
   //doesn't take start time & clip length
   //console.log(songs.length);
   for(var i=0; i<videos.count(); i++){
-    console.log(videos.getUrl(i));
-    console.log(i);
-    //will return a promise. Once that promis is 'true' then we combine vids
     s.prepClip(i);
   }
 
-  //wait until all songs are ready to be commbined
-  help.waitTillReady()
-
-  console.log('we\'re ready!!');
+  s.combineTwo();
 
   break;
 }

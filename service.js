@@ -6,6 +6,7 @@ const readline = require('readline');
 const help = require('./helpers');
 const videos = require('./videos');
 
+const STD_MSG = '[MSG service] ';
 const STREAM_MSG = '[MSG DURING STREAM] ';
 
 const tracker = {
@@ -155,6 +156,9 @@ exports.downloadSingleHD = function(url, index){
 exports.clipVideo = function (index, startTime, length) {
   !(index==null)?null:index='00'
   let outputPath = `./bin/cliped_out${index}.mp4`;
+  let inputPath = videos.getVideoPath(index);
+
+  console.log(STD_MSG, `Clipping from path : ${inputPath}`);
 
   help.deleteIfExists(outputPath);
 
@@ -166,7 +170,7 @@ exports.clipVideo = function (index, startTime, length) {
 
     '-ss', startTime,
 
-    '-i', `./bin/out${index}.mp4`,
+    '-i', inputPath,
 
     '-c', 'copy',
     //duration of cut, default 60
@@ -180,7 +184,7 @@ exports.clipVideo = function (index, startTime, length) {
 
   ffmpegProcess.on('close', () => {
     console.log('clipping done for path: ', outputPath);
-    videos.setAudioPath(index, outputPath);
+    videos.setClipPath(index, outputPath);
     videos.setReady(index);
   })
 }
@@ -190,11 +194,11 @@ exports.prepClip = async function(index){
   let path = `./bin/vid${index}.mp4`;
   let video_info = videos.getVideo(index);
 
+  help.deleteIfExists(path);
+
   // Get audio and video streams
   const audio = ytdl(video_info.url, { quality: 'highestaudio' });
   const video = ytdl(video_info.url, { quality: 'highestvideo' });
-
-  help.deleteIfExists(path);
 
   // Start the ffmpeg child process
   const ffmpegProcess = cp.spawn(ffmpeg, [
@@ -222,6 +226,7 @@ exports.prepClip = async function(index){
     ],
   });
   ffmpegProcess.on('close', () => {
+    console.log(STD_MSG, `Full video #${index} finished at ${path}`);
     videos.setVideoPath(index, path);
     // TODO: Change this below
     exports.clipVideo(index, videos.getStartTime(index), videos.getLength(index));
@@ -231,4 +236,9 @@ exports.prepClip = async function(index){
   // FFmpeg creates the transformer streams and we just have to insert / read data
   audio.pipe(ffmpegProcess.stdio[4]);
   video.pipe(ffmpegProcess.stdio[5]);
+}
+
+//Combines two clips together
+exports.combineTwo = async function(index){
+  await help.waitTillReady();
 }

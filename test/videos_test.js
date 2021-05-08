@@ -12,6 +12,11 @@ function validate_videos(){
   }
 }
 
+function testTimer(){
+  console.log('Hello');
+  setTimeout(() => { console.log('World');}, 2000);
+}
+
 console.log('Starting Videos Test\n\n');
 print_videos();
 
@@ -19,3 +24,8 @@ console.log('creating Self Care video object\n');
 videos.create('https://www.youtube.com/watch?v=SsKT0s5J8ko', '0:26', '60');
 
 validate_videos();
+
+
+//Testing Timer
+testTimer();
+console.log('Goodbye cruel world');

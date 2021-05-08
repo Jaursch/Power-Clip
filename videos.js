@@ -5,6 +5,8 @@
 
 const h = require('./helpers');
 
+const STD_MSG = '[MSG helpers] ';
+
 // url:string,
 // startTime:Date,
 // length:seconds - how long it should be
@@ -14,17 +16,19 @@ const h = require('./helpers');
 const videos = [];
 
 function valid(index, element){
+  if(!(typeof index === 'number' && isFinite(index)))
+    throw `Given index is not a number`;
   if(videos[index]==null)
-    throw 'Video is not valid at given index!';
+    throw `Video is not valid at index: ${index}!`;
   if(typeof element !== 'undefined'){
     switch(element){
       case 'videoPath':
         if(typeof videos[index].videoPath == 'undefined')
-          throw 'This video does not have a specified video path!';
+          throw `Video #${index} does not have a specified video path!`;
         break;
       case 'clipPath':
         if(typeof videos[index].clipPath == 'undefined')
-          throw 'This video does not have a specified clip path!';
+          throw `Video #${index} does not have a specified clip path!`;
     }
   }
   return true;
@@ -35,10 +39,10 @@ exports.count = function(){
 }
 
 //adds video info to array and returns index
-exports.create = function(url, startTime='0:45', length='60'){
+exports.create = function(url, startTime, length){
   videos.push({url:url,
-               startTime: startTime,
-               length: length,
+               startTime: startTime==null?'0:45':startTime,
+               length: length==null?'60':length,
                ready: false
              });
   return videos.length-1;
@@ -50,8 +54,9 @@ exports.getAll = function(){
 
 exports.getVideo = function(index){
   try{
-    if(valid(videos[index]))
+    if(valid(index)){
       return videos[index];
+    }
   }catch(e){
     console.error(e);
   }
@@ -69,6 +74,10 @@ exports.getLength = function(index){
   return videos[index].length;
 }
 
+exports.getVideoPath = function(index){
+  return videos[index].videoPath;
+}
+
 exports.setUrl = function(index, url){
   videos[index].url = url;
 }
@@ -81,11 +90,11 @@ exports.setVideoPath = function(index, path){
   }
 }
 
-exports.setAudioPath = function(index, path){
+exports.setClipPath = function(index, path){
   if(h.exists(path)){
-    videos[index].audioPath = path;
+    videos[index].clipPath = path;
   }else{
-    throw 'Given audio path does not exist';
+    throw `Given clip path for video ${index} does not exist: ${path}`;
   }
 }
 
