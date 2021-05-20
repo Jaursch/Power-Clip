@@ -11,6 +11,7 @@ const STD_MSG = '[MSG helpers] ';
 // startTime:Date,
 // length:seconds - how long it should be
 // ready:bool - ready to be clipped
+// TEST:: downloaded:bool - video has been downloaded
 // videoPath:string
 // clipPath:string
 const videos = [];
@@ -75,7 +76,11 @@ exports.getLength = function(index){
 }
 
 exports.getVideoPath = function(index){
-  return videos[index].videoPath;
+  if(!videos[index].hasOwnProperty('videoPath') || !videos[index].videoPath)
+    return false;
+  else{
+    return videos[index].videoPath;
+  }
 }
 
 exports.setUrl = function(index, url){

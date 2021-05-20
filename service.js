@@ -153,6 +153,16 @@ exports.downloadSingleHD = function(url, index){
   video.pipe(ffmpegProcess.stdio[5]);
 }
 
+exports.clipVideos = async function(){
+  await help.waitTillAllDownloaded();
+  console.log('All videos should be downloaded');
+
+  for(var i=0; i<videos.count(); i++){
+    const video = videos.getVideo(i);
+    exports.clipVideo(i, video.startTime, video.length);
+  }
+}
+
 exports.clipVideo = function (index, startTime, length) {
   !(index==null)?null:index='00'
   let outputPath = `./bin/cliped_out${index}.mp4`;
@@ -184,8 +194,12 @@ exports.clipVideo = function (index, startTime, length) {
 
   ffmpegProcess.on('close', () => {
     console.log('clipping done for path: ', outputPath);
-    videos.setClipPath(index, outputPath);
-    videos.setReady(index);
+    try{
+      videos.setClipPath(index, outputPath);
+      videos.setReady(index);
+    }catch(error){
+      console.error(error);
+    }
   })
 }
 
@@ -227,9 +241,12 @@ exports.prepClip = async function(index){
   });
   ffmpegProcess.on('close', () => {
     console.log(STD_MSG, `Full video #${index} finished at ${path}`);
-    videos.setVideoPath(index, path);
-    // TODO: Change this below
-    exports.clipVideo(index, videos.getStartTime(index), videos.getLength(index));
+    try{
+      videos.setVideoPath(index, path);
+    }catch(error){
+      console.error(error);
+    }
+    //exports.clipVideo(index, videos.getStartTime(index), videos.getLength(index));
   });
 
   // Link streams
@@ -240,5 +257,7 @@ exports.prepClip = async function(index){
 
 //Combines two clips together
 exports.combineTwo = async function(index){
+  console.log(STD_MSG, 'waiting');
   await help.waitTillReady();
+  console.log(STD_MSG, 'not waiting anymore!');
 }

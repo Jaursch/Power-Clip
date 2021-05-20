@@ -29,6 +29,12 @@ function promptURL(index=null){
   return url;
 }
 
+
+//use if we need to make everything async
+async function combineTwoVideos(){
+
+}
+
 console.log("\nWelcome to PowerClip! Let's get this party started!\n");
 
 const args = process.argv.slice(2);
@@ -67,12 +73,14 @@ case 'hd':
 default:
   console.log('We are now going to combine two clipped YouTube videos');
 
+  const testUrls = ['https://www.youtube.com/watch?v=Co0tTeuUVhU', 'https://www.youtube.com/watch?v=nbXgHAzUWB0']
   for (var i =0; i<2; i++){
-    let url = promptURL(i);
-    let startTime = prompt('Enter the start time of the video\'s clip (default 0:45): ');
-    let length = prompt('How long should this clip be (default 60[seconds]): ');
+    //let url = promptURL(i);
+    //let startTime = prompt('Enter the start time of the video\'s clip (default 0:45): ');
+    //let length = prompt('How long should this clip be (default 60[seconds]): ');
 
-    videos.create(url, startTime, length);
+    //videos.create(url, startTime, length);
+    videos.create(testUrls[i]);
   }
   console.log(JSON.stringify(videos.getAll()));
 
@@ -81,6 +89,8 @@ default:
   for(var i=0; i<videos.count(); i++){
     s.prepClip(i);
   }
+
+  s.clipVideos();
 
   s.combineTwo();
 
