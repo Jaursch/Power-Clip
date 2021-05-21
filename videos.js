@@ -5,7 +5,7 @@
 
 const h = require('./helpers');
 
-const STD_MSG = '[MSG helpers] ';
+const STD_MSG = '[MSG videos] ';
 
 // url:string,
 // startTime:Date,
@@ -109,6 +109,14 @@ exports.setReady = function(index, ready=true){
 
 exports.isReady = function(index){
   return videos[index].ready;
+}
+
+exports.allDownloaded = function(){
+  for(let video of videos){
+    if(video.videoPath == false || typeof(video.videoPath) == 'undefined'){
+      return false;
+    }
+  }return true;
 }
 
 exports.allReady = function(){

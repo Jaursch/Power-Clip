@@ -1,6 +1,8 @@
 const fs = require('fs');
 const videos = require('./videos');
 
+const STD_MSG = '[MSG helpers] ';
+
 exports.DEF_VID_PATH = './bin/out00.mp4';
 
 //replaces extra chars w/ underscore
@@ -17,12 +19,12 @@ exports.cleanBin = function(){
 exports.deleteIfExists = function(path){
   try{
     if(fs.existsSync(path)){
-      console.log(`Deleting file at: ${path}`);
+      console.log(STD_MSG, `Deleting file at: ${path}`);
       fs.unlinkSync(path);
-      console.log(path + ' deleted')
+      console.log(STD_MSG, path + ' deleted')
     }
   }catch(err){
-    console.log('ERR - deleteIfExists: ' + err);
+    console.error('ERR - deleteIfExists: ' + err);
   }
 }
 
@@ -33,14 +35,26 @@ exports.exists = function(path){
     else
       return false;
   }catch(err){
-      console.log('ERR - exists: ' + err);
+      console.error('ERR - exists: ' + err);
   }
 }
 
 //when a video is completely downloaded it's path will be entered
 exports.waitTillAllDownloaded = async function(){
   console.log('checking videos');
-  for(var i=0; i<videos.count(); i++){
+  return new Promise(resolve => {
+    function checkAllDownloaded(){
+      if(videos.allDownloaded()){
+        console.log(STD_MSG, 'all downloaded');
+        resolve();
+      }else{
+        console.log(STD_MSG, 'still downloading');
+        setTimeout(checkAllDownloaded, 5000);
+      }
+    }
+    checkAllDownloaded();
+  });
+  /*for(var i=0; i<videos.count(); i++){
     if(videos.getVideoPath(i) == false){
       console.log(`video ${i} not ready`);
       setTimeout(exports.waitTillAllDownloaded, 5000);
@@ -48,13 +62,20 @@ exports.waitTillAllDownloaded = async function(){
     }else{
       console.log(`video ${i} ready: ${videos.getVideoPath(i)}`);
     }
-  }
+  }*/
 }
 
 exports.waitTillReady = async function(){
-  if(videos.allReady()==false){
-    setTimeout(exports.waitTillReady, 1000);
-  }else{
-    console.log('actually all ready!');
-  }
+  return new Promise(resolve =>{
+    function checkVidPath(){
+      if(videos.allReady()==true){
+        console.log(STD_MSG, 'actually all ready!');
+        resolve();
+      }else{
+        console.log(STD_MSG, 'waiting a little longer for ready');
+        setTimeout(checkVidPath, 2000);
+      }
+    }
+    checkVidPath();
+  });
 }
