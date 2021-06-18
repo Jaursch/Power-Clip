@@ -153,9 +153,10 @@ exports.downloadSingleHD = function(url, index){
   video.pipe(ffmpegProcess.stdio[5]);
 }
 
+//clip all videos that are stored. Will block until all videos are downloaded
 exports.clipVideos = async function(){
   await help.waitTillAllDownloaded();
-  console.log('All videos should be downloaded');
+  console.log(STD_MSG, 'All videos should be downloaded');
 
   for(var i=0; i<videos.count(); i++){
     const video = videos.getVideo(i);
@@ -176,15 +177,12 @@ exports.clipVideo = function (index, startTime, length) {
   startTime = '30.0';
 
   const ffmpegProcess = cp.spawn(ffmpeg, [
-    '-loglevel', '8', '-hide_banner',
-
+    '-y',
     '-ss', startTime,
-
     '-i', inputPath,
-
-    '-c', 'copy',
-    //duration of cut, default 60
-    '-t',length,
+    '-t', length,
+    '-b:a', '192K',
+    '-nostdin',
     //output file
     outputPath
 
@@ -193,7 +191,7 @@ exports.clipVideo = function (index, startTime, length) {
   });
 
   ffmpegProcess.on('close', () => {
-    console.log('clipping done for path: ', outputPath);
+    console.log(STD_MSG, 'clipping done for path: ', outputPath);
     try{
       videos.setClipPath(index, outputPath);
       videos.setReady(index);
