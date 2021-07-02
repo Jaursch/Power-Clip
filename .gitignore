@@ -1,5 +1,5 @@
 #Added Files
-
+.DS_Store
 bin/*
 
 #Below is standard node.js gitignore

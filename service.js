@@ -61,21 +61,30 @@ exports.info = async function(url){
 exports.downloadSingle = function(url){
   let title = '';
 
-  const readStream = ytdl(url);
-  readStream.on('info',(info, format) => {
-              console.log(STREAM_MSG + 'Now Downloading: ' + info.videoDetails.title);
-              title = help.replace(info.videoDetails.title);
-
-              const fileType = format.container;
-              const writeStream = fs.createWriteStream(`./bin/${title}.${fileType}`);
-
-              readStream.pipe(writeStream);
-            })
-            .on('progress',(_,downloaded,total) =>{
-              const percent = (downloaded/total*100).toFixed(1);
-              if(percent % 5 == 0) //print log every 5%
-                console.log(`Progress: ${percent}%\t downloaded: ${downloaded}\t total: ${total}`);
-            })
+  try {
+    const readStream = ytdl(url);
+    readStream.on('info',(info, format) => {
+                console.log(STREAM_MSG + 'Now Downloading: ' + info.videoDetails.title);
+                title = help.replace(info.videoDetails.title);
+  
+                const fileType = format.container;
+                if(!fs.existsSync('./bin'))
+                  fs.mkdirSync('./bin'); 
+                const writeStream = fs.createWriteStream(`./bin/${title}.${fileType}`);
+  
+                readStream.pipe(writeStream);
+              })
+              .on('progress',(_,downloaded,total) =>{
+                const percent = (downloaded/total*100).toFixed(1);
+                if(percent % 5 == 0) //print log every 5%
+                  console.log(`Progress: ${percent}%\t downloaded: ${downloaded}\t total: ${total}`);
+              })
+              .on('error', (err) => {
+                throw err
+              })    
+  } catch (err) {
+    console.error(STD_MSG, "Error during download: ", err);    
+  }
 }
 
 // TODO: Currently depreciated- does not work w/ videos object
