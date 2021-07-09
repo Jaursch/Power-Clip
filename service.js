@@ -262,9 +262,23 @@ exports.prepClip = async function(index){
   video.pipe(ffmpegProcess.stdio[5]);
 }
 
+// Creating list of file paths for ffmpeg demuxer
+//  to put files together
+function createDemuxerList(){
+  const v = videos.getAll();
+  let txt = '';
+  for(video in v){
+    txt += `file ${v[video].clipPath}\n`;
+  }
+  fs.writeFileSync('./bin/list.txt', txt);
+}
+
 //Combines two clips together
 exports.combineTwo = async function(index){
   console.log(STD_MSG, 'waiting');
   await help.waitTillReady();
   console.log(STD_MSG, 'not waiting anymore!');
+
+  createDemuxerList();
+  console.log(`contents of list.txt: \n${fs.readFileSync('./bin/list.txt')}`);
 }

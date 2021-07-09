@@ -12,8 +12,8 @@ const STD_MSG = '[MSG videos] ';
 // length:seconds - how long it should be
 // ready:bool - ready to be clipped
 // TEST:: downloaded:bool - video has been downloaded
-// videoPath:string
-// clipPath:string
+// videoPath:string - full video path
+// clipPath:string - full clip path
 const videos = [];
 
 function valid(index, element){

@@ -87,7 +87,7 @@ default:
   //doesn't take start time & clip length
   //console.log(songs.length);
   for(var i=0; i<videos.count(); i++){
-    s.prepClip(i);
+    s.prepClip(i); //NOTE: For dev purposes, shouldn't run if videos are downloaded correctly
   }
 
   s.clipVideos();
