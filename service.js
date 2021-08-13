@@ -8,6 +8,7 @@ const videos = require('./videos');
 
 const STD_MSG = '[MSG service] ';
 const STREAM_MSG = '[MSG DURING STREAM] ';
+const DEMUXER_LIST_PATH = './bin/list.txt';
 
 const tracker = {
   start: Date.now(),
@@ -175,7 +176,7 @@ exports.clipVideos = async function(){
 
 exports.clipVideo = function (index, startTime, length) {
   !(index==null)?null:index='00'
-  let outputPath = `./bin/cliped_out${index}.mp4`;
+  let outputPath = `./bin/clip${index}.mp4`;
   let inputPath = videos.getVideoPath(index);
 
   console.log(STD_MSG, `Clipping from path : ${inputPath}`);
@@ -199,6 +200,10 @@ exports.clipVideo = function (index, startTime, length) {
     windowsHide: true
   });
 
+  ffmpegProcess.on('message', (msg) => {
+    console.log(STD_MSG, 'message from clipping of ', inputPath, ': ', msg);
+  });
+  
   ffmpegProcess.on('close', () => {
     console.log(STD_MSG, 'clipping done for path: ', outputPath);
     try{
@@ -262,23 +267,66 @@ exports.prepClip = async function(index){
   video.pipe(ffmpegProcess.stdio[5]);
 }
 
-// Creating list of file paths for ffmpeg demuxer
-//  to put files together
-function createDemuxerList(){
-  const v = videos.getAll();
-  let txt = '';
-  for(video in v){
-    txt += `file ${v[video].clipPath}\n`;
-  }
-  fs.writeFileSync('./bin/list.txt', txt);
-}
-
 //Combines two clips together
 exports.combineTwo = async function(index){
-  console.log(STD_MSG, 'waiting');
   await help.waitTillReady();
-  console.log(STD_MSG, 'not waiting anymore!');
 
-  createDemuxerList();
-  console.log(`contents of list.txt: \n${fs.readFileSync('./bin/list.txt')}`);
+  const outputPath = 'bin/output.mp4';
+  help.deleteIfExists(outputPath);
+
+  const v = videos.getAll();
+  const inputParams = [];
+  var filterCmd = '';
+  for(idx in v){
+    inputParams.push('-i',`${v[idx].clipPath}`);
+    filterCmd += `[${idx}:v]scale=1920:1080:force_original_aspect_ratio=decrease:eval=frame,pad=1920:1080:-1:-1:color=black,setsar=1[v${idx}],`;
+    //console.log('input params: \n', inputParams);
+    //console.log('filterCmd: \n', filterCmd);
+  }
+  // adding final concat filter mapping
+  for(idx in v){
+    filterCmd += `[v${idx}] [${idx}:a] `;
+  }
+  filterCmd += `concat=n=${v.length}:v=1:a=1 [v] [a]`;
+
+  //console.log(filterCmd);
+
+  const params = [
+    // expanding clip paths to be combined
+    ...inputParams,
+    '-filter_complex', filterCmd,
+    '-map', '[v]',
+    '-map', '[a]',
+    '-vsync', '2',
+    outputPath
+  ]
+
+  //console.log('params: \n',params);
+
+  const combineStream = cp.spawn(ffmpeg, params);
+  combineStream.on('message', (msg) => {
+    console.log(STD_MSG, 'combining videos msg: ', msg);
+  });
+  combineStream.on('close', (msg) => {
+    console.log(STD_MSG, 'combining \'closed\' msg: ', msg);
+  });
+  combineStream.on('error', (msg) => {
+    console.log(STD_MSG, 'combining \'error\' msg: ', msg);
+  })
 }
+
+// OLD DEMUX CONCAT 
+// create standard timebase
+//help.createDemuxerList();
+//console.log(`contents of list.txt: \n${fs.readFileSync(DEMUXER_LIST_PATH)}`);
+
+//start demuxer
+/*const combineStream = cp.spawn(ffmpeg, [ // ffmpeg -f concat -safe 0 -i mylist.txt -c copy output.mp4
+  '-f', 'concat',
+  '-safe', '0',
+  '-i', DEMUXER_LIST_PATH,
+  '-c', 'copy',
+  './bin/output.mp4'
+], {
+  windowsHide: true
+});*/

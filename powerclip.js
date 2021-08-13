@@ -60,7 +60,9 @@ case 'clip':
     const startTime = prompt('Enter a start time: ');
     const secLength = prompt('How many seconds?: ');
 
-    s.clipVideo(startTime, secLength);
+    const idx = videos.create(null, startTime, secLength, help.DEF_VID_PATH)
+
+    s.clipVideo(idx, startTime, secLength);
   }else
     console.log(help.DEF_VID_PATH+' does not exist. Cannot use default clip');
 

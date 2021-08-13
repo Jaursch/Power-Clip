@@ -2,8 +2,9 @@ const fs = require('fs');
 const videos = require('./videos');
 
 const STD_MSG = '[MSG helpers] ';
+const DEMUXER_LIST_PATH = '../bin/list.txt';
 
-exports.DEF_VID_PATH = './bin/out00.mp4';
+exports.DEF_VID_PATH = './bin/out0.mp4';
 
 //replaces extra chars w/ underscore
 exports.replace = function (link){
@@ -78,4 +79,15 @@ exports.waitTillReady = async function(){
     }
     checkVidPath();
   });
+}
+
+// Creating list of file paths for ffmpeg demuxer
+//  to put files together
+exports.createDemuxerList = function (){
+  const v = videos.getAll();
+  let txt = '';
+  for(video in v){
+    txt += `file '${(v[video].clipPath).substring(1)}'\n`;
+  }
+  fs.writeFileSync(DEMUXER_LIST_PATH, txt);
 }

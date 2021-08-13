@@ -40,11 +40,12 @@ exports.count = function(){
 }
 
 //adds video info to array and returns index
-exports.create = function(url, startTime, length){
+exports.create = function(url, startTime, length, vidPath=null){
   videos.push({url:url,
                startTime: startTime==null?'0:45':startTime,
                length: length==null?'60':length,
-               ready: false
+               ready: false,
+               videoPath: vidPath==null?null:vidPath
              });
   return videos.length-1;
 }
@@ -113,7 +114,7 @@ exports.isReady = function(index){
 
 exports.allDownloaded = function(){
   for(let video of videos){
-    if(video.videoPath == false || typeof(video.videoPath) == 'undefined'){
+    if(video.videoPath == false || typeof(video.videoPath) == 'undefined'|| video.videoPath == null){
       return false;
     }
   }return true;
