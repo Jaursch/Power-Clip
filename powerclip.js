@@ -6,35 +6,6 @@ const videos = require('./videos');
 
 const STD_MSG = '[MSG powerclip] ';
 
-//prompts for a url and then returns it if a valid YT link
-//index is an optional param
-function promptURL(index=null){
-  //console.log('index: '+index+'\nindex null? '+(index===null)+'\nindex blank? ' + (index==""));
-  let index_txt = !(index==null)? ' for video #' + (index+1) : '';
-
-  let url = prompt(`Enter YouTube URL${index_txt}: `);
-  let validated = false;
-
-  //Make sure user gives a valid url
-  do{
-    url? null: url = 'https://www.youtube.com/watch?v=nbXgHAzUWB0';
-
-    validated = s.validate(url);
-
-    if(!validated){
-      console.log('Invalid URL!\n');
-      url = prompt('Try a valid YouTube URL: ');
-    }
-  }while(!validated)
-  return url;
-}
-
-
-//use if we need to make everything async
-async function combineTwoVideos(){
-
-}
-
 console.log("\nWelcome to PowerClip! Let's get this party started!\n");
 
 const args = process.argv.slice(2);
@@ -46,7 +17,7 @@ case 'standard':
     const filepath = s.info(url);
     console.log('Video\'s data can be found at: ' + filepath);
   }
-  s.downloadSingle(url);
+  s.downloadYT(url);
 
   break;
 case 'clip':
@@ -70,7 +41,7 @@ case 'clip':
 case 'hd':
   var url = promptURL();
 
-  s.downloadSingleHD(url);
+  s.downloadHD(url);
   break;
 default:
   console.log('We are now going to combine two clipped YouTube videos');
@@ -92,9 +63,49 @@ default:
     s.prepClip(i); //NOTE: For dev purposes, shouldn't run if videos are downloaded correctly
   }
 
-  s.clipVideos();
+  clipVideos();
 
   s.combineTwo();
 
   break;
+}
+
+/**
+ * prompts user for url until a valid youtube link is given
+ * @param {int} index [optional] index of url if used in collection of videos
+ * @returns validated youtube url
+ */
+function promptURL(index=null){
+  //console.log('index: '+index+'\nindex null? '+(index===null)+'\nindex blank? ' + (index==""));
+  let index_txt = !(index==null)? ' for video #' + (index+1) : '';
+
+  let url = prompt(`Enter YouTube URL${index_txt}: `);
+  let validated = false;
+
+  //Make sure user gives a valid url
+  do{
+    url? null: url = 'https://www.youtube.com/watch?v=nbXgHAzUWB0';
+
+    validated = s.validate(url);
+
+    if(!validated){
+      console.log('Invalid URL!\n');
+      url = prompt('Try a valid YouTube URL: ');
+    }
+  }while(!validated)
+  return url;
+}
+
+//clip all videos that are stored. Will block until all videos are downloaded
+/**
+ * Handler for clipping all videos in object when downloaded
+ */
+ const clipVideos = async function(){
+  await help.waitTillAllDownloaded();
+  console.log(STD_MSG, 'All videos should be downloaded');
+
+  for(var i=0; i<videos.count(); i++){
+    const v = videos.getVideo(i);
+    videos.setClipPath(i, s.clipVideo(i, v.startTime, v.length));
+  }
 }

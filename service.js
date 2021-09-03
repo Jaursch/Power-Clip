@@ -9,6 +9,7 @@ const videos = require('./videos');
 const STD_MSG = '[MSG service] ';
 const STREAM_MSG = '[MSG DURING STREAM] ';
 const DEMUXER_LIST_PATH = './bin/list.txt';
+const OUTPUT_PATH ='./bin/';
 
 const tracker = {
   start: Date.now(),
@@ -58,9 +59,14 @@ exports.info = async function(url){
   return filepath;
 }
 
-//download single, full 360p video from given YT url
-exports.downloadSingle = function(url){
+/**
+ * Download youtube video in standard 360p quality
+ * @param {string} url  url of valid youtube video
+ * @returns {string} relative path of downloaded video
+ */
+exports.downloadYT = function(url){
   let title = '';
+  let path = '';
 
   try {
     const readStream = ytdl(url);
@@ -71,14 +77,19 @@ exports.downloadSingle = function(url){
                 const fileType = format.container;
                 if(!fs.existsSync('./bin'))
                   fs.mkdirSync('./bin'); 
+                path = `./bin/${title}.${fileType}`;
                 const writeStream = fs.createWriteStream(`./bin/${title}.${fileType}`);
   
                 readStream.pipe(writeStream);
               })
               .on('progress',(_,downloaded,total) =>{
                 const percent = (downloaded/total*100).toFixed(1);
-                if(percent % 5 == 0) //print log every 5%
+                if(percent % 5 == 0){ //print log every 5%
+                  readline.cursorTo(process.stdout, 0); //untested
                   console.log(`Progress: ${percent}%\t downloaded: ${downloaded}\t total: ${total}`);
+                }if(percent == 100 && path != ''){ //finished
+                  return path;
+                }
               })
               .on('error', (err) => {
                 throw err
@@ -88,10 +99,15 @@ exports.downloadSingle = function(url){
   }
 }
 
-// TODO: Currently depreciated- does not work w/ videos object
-exports.downloadSingleHD = function(url, index){
+/**
+ * Download youtube video in highest quality available
+ * @param {string} url 
+ * @param {int} index 
+ * @returns {string} relative path of downloaded video
+ */
+exports.downloadHD = function(url, index){
   !(index==null)? null:index=00;
-  let path = `./bin/out${index}.mp4`;
+  let path = `${OUTPUT_PATH}out${index}.mp4`;
 
   // Get audio and video streams
   const audio = ytdl(url, { quality: 'highestaudio' })
@@ -107,7 +123,7 @@ exports.downloadSingleHD = function(url, index){
   let progressbarHandle = null;
   const progressbarInterval = 1000;
 
-  help.deleteIfExists(`./bin/out${index}.mp4`);
+  help.deleteIfExists(path);
 
   // Start the ffmpeg child process
   const ffmpegProcess = cp.spawn(ffmpeg, [
@@ -139,10 +155,7 @@ exports.downloadSingleHD = function(url, index){
     process.stdout.write('\n\n\n\n');
     clearInterval(progressbarHandle);
 
-    const startTime = '40';
-    const secLength = '60';
-
-    exports.clipVideo(index, startTime, secLength);
+    return path;
   });
 
   // Link streams
@@ -161,17 +174,6 @@ exports.downloadSingleHD = function(url, index){
   });
   audio.pipe(ffmpegProcess.stdio[4]);
   video.pipe(ffmpegProcess.stdio[5]);
-}
-
-//clip all videos that are stored. Will block until all videos are downloaded
-exports.clipVideos = async function(){
-  await help.waitTillAllDownloaded();
-  console.log(STD_MSG, 'All videos should be downloaded');
-
-  for(var i=0; i<videos.count(); i++){
-    const video = videos.getVideo(i);
-    exports.clipVideo(i, video.startTime, video.length);
-  }
 }
 
 exports.clipVideo = function (index, startTime, length) {
@@ -314,19 +316,3 @@ exports.combineTwo = async function(index){
     console.log(STD_MSG, 'combining \'error\' msg: ', msg);
   })
 }
-
-// OLD DEMUX CONCAT 
-// create standard timebase
-//help.createDemuxerList();
-//console.log(`contents of list.txt: \n${fs.readFileSync(DEMUXER_LIST_PATH)}`);
-
-//start demuxer
-/*const combineStream = cp.spawn(ffmpeg, [ // ffmpeg -f concat -safe 0 -i mylist.txt -c copy output.mp4
-  '-f', 'concat',
-  '-safe', '0',
-  '-i', DEMUXER_LIST_PATH,
-  '-c', 'copy',
-  './bin/output.mp4'
-], {
-  windowsHide: true
-});*/
