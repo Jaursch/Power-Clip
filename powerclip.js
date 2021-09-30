@@ -33,7 +33,7 @@ case 'clip':
 
     const idx = videos.create(null, startTime, secLength, help.DEF_VID_PATH)
 
-    s.clipVideo(idx, startTime, secLength);
+    s.clipVideo(videos.getVideoPath(idx), startTime, secLength);
   }else
     console.log(help.DEF_VID_PATH+' does not exist. Cannot use default clip');
 

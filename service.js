@@ -176,45 +176,45 @@ exports.downloadHD = function(url, index){
   video.pipe(ffmpegProcess.stdio[5]);
 }
 
-exports.clipVideo = function (index, startTime, length) {
-  !(index==null)?null:index='00'
-  let outputPath = `./bin/clip${index}.mp4`;
-  let inputPath = videos.getVideoPath(index);
+/**
+ * Creates a shortened video of the given path for specified time & starting interval
+ * @param {string} inputPath path of mp4 video to manipulate
+ * @param {int} startTime index to start new video in seconds
+ * @param {int} length duration of new video in seconds
+ */
+exports.clipVideo = function (inputPath, startTime=30.0, length=60) {
+  let title = inputPath.slice(inputPath.indexOf(OUTPUT_PATH), inputPath.indexOf('.mp4'));
+  let outputPath = `${OUTPUT_PATH}clip${title}.mp4`;
 
   console.log(STD_MSG, `Clipping from path : ${inputPath}`);
 
   help.deleteIfExists(outputPath);
 
-  if(!startTime)
-  startTime = '30.0';
-
-  const ffmpegProcess = cp.spawn(ffmpeg, [
-    '-y',
-    '-ss', startTime,
-    '-i', inputPath,
-    '-t', length,
-    '-b:a', '192K',
-    '-nostdin',
-    //output file
-    outputPath
-
-  ], {
-    windowsHide: true
-  });
-
-  ffmpegProcess.on('message', (msg) => {
-    console.log(STD_MSG, 'message from clipping of ', inputPath, ': ', msg);
-  });
+  try{
+    const ffmpegProcess = cp.spawn(ffmpeg, [
+      '-y',
+      '-ss', startTime,
+      '-i', inputPath,
+      '-t', length,
+      '-b:a', '192K',
+      '-nostdin',
+      //output file
+      outputPath
   
-  ffmpegProcess.on('close', () => {
-    console.log(STD_MSG, 'clipping done for path: ', outputPath);
-    try{
-      videos.setClipPath(index, outputPath);
-      videos.setReady(index);
-    }catch(error){
-      console.error(error);
-    }
-  })
+    ], {
+      windowsHide: true
+    });
+  
+    ffmpegProcess.on('message', (msg) => {
+      console.log(STD_MSG, 'message from clipping of ', inputPath, ': ', msg);
+    });
+    ffmpegProcess.on('close', () => {
+      console.log(STD_MSG, 'clipping done for path: ', outputPath);
+      return outputPath;
+    });
+  }catch(err){
+    console.error(err);
+  }
 }
 
 //Downloads video from given video object index and sends video off to be clipped
