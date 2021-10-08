@@ -55,7 +55,29 @@ app.get("/info", async (req, res) => {
 	}
 });
 
-app.get("/standard", (req, res) => {
+app.get("/standard", async (req, res) => {
+	console.log("/standard - get");
+	if(validateJSONbody(req, res)){
+		const url = req.body.url;
+		if(!powerclip.validate(url)){
+			res.status(400).send(`'${url}' is not a valid YouTube url`);
+		}else{ 
+			// download video
+			let path = powerclip.downloadYT(url);
+
+			console.log("path value: " + path);
+
+			// once path is given, return video
+			/*res.status(200).download(path, 'video.mp4', (err) => {
+				if(err){
+					console.error("error with standard download: " + err);
+					return;
+				}else{
+					console.log("standard download successful");
+				}
+			});*/
+		}
+	}
 
 });
 

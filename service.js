@@ -3,8 +3,11 @@ const ytdl = require('ytdl-core');
 const ffmpeg = require('ffmpeg-static');
 const cp = require('child_process');
 const readline = require('readline');
+const stream = require('stream');
+
 const help = require('./helpers');
 const videos = require('./videos');
+const { Readable } = require('stream');
 
 const STD_MSG = '[MSG service] ';
 const STREAM_MSG = '[MSG DURING STREAM] ';
@@ -64,12 +67,15 @@ exports.info = async function(url){
  * @param {string} url  url of valid youtube video
  * @returns {string} relative path of downloaded video
  */
-exports.downloadYT = function(url){
+exports.downloadYT = async function(url){
   let title = '';
   let path = '';
+  
+  let readStream = null;
+  let writeStream = null;
 
   try {
-    const readStream = ytdl(url);
+    readStream = ytdl(url);
     readStream.on('info',(info, format) => {
                 console.log(STREAM_MSG + 'Now Downloading: ' + info.videoDetails.title);
                 title = help.replace(info.videoDetails.title);
@@ -78,7 +84,7 @@ exports.downloadYT = function(url){
                 if(!fs.existsSync('./bin'))
                   fs.mkdirSync('./bin'); 
                 path = `./bin/${title}.${fileType}`;
-                const writeStream = fs.createWriteStream(`./bin/${title}.${fileType}`);
+                writeStream = fs.createWriteStream(`./bin/${title}.${fileType}`);
   
                 readStream.pipe(writeStream);
               })
@@ -97,6 +103,14 @@ exports.downloadYT = function(url){
   } catch (err) {
     console.error(STD_MSG, "Error during download: ", err);    
   }
+  stream.finished(readStream, (err) => {
+    if(err){
+      console.error('Stream failed: ', err);
+    }else{
+      console.log('Stream complete');
+    }
+  });
+  console.log("inside standard");
 }
 
 /**
