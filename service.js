@@ -191,39 +191,43 @@ exports.downloadHD = function(url, index){
  * @param {int} startTime index to start new video in seconds
  * @param {int} length duration of new video in seconds
  */
-exports.clipVideo = function (inputPath, startTime=30.0, length=60) {
-  let title = inputPath.slice(inputPath.indexOf(OUTPUT_PATH), inputPath.indexOf('.mp4'));
-  let outputPath = `${OUTPUT_PATH}clip${title}.mp4`;
+exports.clipVideo = async function (inputPath, startTime=30.0, length=15) {
+  return new Promise((resolve, reject) => {
 
-  console.log(STD_MSG, `Clipping from path : ${inputPath}`);
+    let title = inputPath.slice(inputPath.indexOf(OUTPUT_PATH), inputPath.indexOf('.mp4'));
+    let outputPath = `${OUTPUT_PATH}clip${title}.mp4`;
 
-  help.deleteIfExists(outputPath);
+    console.log(STD_MSG, `Clipping from path : ${inputPath}`);
 
-  try{
-    const ffmpegProcess = cp.spawn(ffmpeg, [
-      '-y',
-      '-ss', startTime,
-      '-i', inputPath,
-      '-t', length,
-      '-b:a', '192K',
-      '-nostdin',
-      //output file
-      outputPath
-  
-    ], {
-      windowsHide: true
-    });
-  
-    ffmpegProcess.on('message', (msg) => {
-      console.log(STD_MSG, 'message from clipping of ', inputPath, ': ', msg);
-    });
-    ffmpegProcess.on('close', () => {
-      console.log(STD_MSG, 'clipping done for path: ', outputPath);
-      return outputPath;
-    });
-  }catch(err){
-    console.error(err);
-  }
+    help.deleteIfExists(outputPath);
+
+    try{
+      const ffmpegProcess = cp.spawn(ffmpeg, [
+        '-y',
+        '-ss', startTime,
+        '-i', inputPath,
+        '-t', length,
+        '-b:a', '192K',
+        '-nostdin',
+        //output file
+        outputPath
+    
+      ], {
+        windowsHide: true
+      });
+    
+      ffmpegProcess.on('message', (msg) => {
+        console.log(STD_MSG, 'message from clipping of ', inputPath, ': ', msg);
+      });
+      ffmpegProcess.on('close', () => {
+        console.log(STD_MSG, 'clipping done for path: ', outputPath);
+        resolve(outputPath);
+      });
+    }catch(err){
+      console.error(err);
+      reject(err);
+    }
+  }); 
 }
 
 //Downloads video from given video object index and sends video off to be clipped
@@ -279,7 +283,7 @@ exports.prepClip = async function(index){
 }
 
 //Combines two clips together
-exports.combineTwo = async function(index){
+exports.combineTwo = async function(){
   await help.waitTillReady();
 
   const outputPath = 'bin/output.mp4';
@@ -329,50 +333,46 @@ exports.combineTwo = async function(index){
 //Combine array of file together w/ given filepaths
 exports.combine = async function(filepaths, outFileName){
   await new Promise((resolve, reject) => {
+    const outputPath = `./bin/${outFileName}.mp4`;
+    help.deleteIfExists(outputPath);
 
-  const outputPath = `./bin/${outFileName}.mp4`;
-  help.deleteIfExists(outputPath);
+    const inputParams = [];
+    var filterCmd = '';
+    for(idx in filepaths){
+      inputParams.push('-i',`${filepaths[idx]}`);
+      filterCmd += `[${idx}:v]scale=1920:1080:force_original_aspect_ratio=decrease:eval=frame,pad=1920:1080:-1:-1:color=black,setsar=1[v${idx}],`;
+    }
+    // adding final concat filter mapping
+    for(idx in filepaths){
+      filterCmd += `[v${idx}] [${idx}:a] `;
+    }
+    filterCmd += `concat=n=${filepaths.length}:v=1:a=1 [v] [a]`;
 
-  const inputParams = [];
-  var filterCmd = '';
-  for(idx in filepaths){
-    inputParams.push('-i',`${filepaths[idx]}`);
-    filterCmd += `[${idx}:v]scale=1920:1080:force_original_aspect_ratio=decrease:eval=frame,pad=1920:1080:-1:-1:color=black,setsar=1[v${idx}],`;
-    //console.log('input params: \n', inputParams);
-    //console.log('filterCmd: \n', filterCmd);
-  }
-  // adding final concat filter mapping
-  for(idx in filepaths){
-    filterCmd += `[v${idx}] [${idx}:a] `;
-  }
-  filterCmd += `concat=n=${filepaths.length}:v=1:a=1 [v] [a]`;
+    //console.log(filterCmd);
 
-  //console.log(filterCmd);
+    const params = [
+      // expanding clip paths to be combined
+      ...inputParams,
+      '-filter_complex', filterCmd,
+      '-map', '[v]',
+      '-map', '[a]',
+      '-vsync', '2',
+      outputPath
+    ]
 
-  const params = [
-    // expanding clip paths to be combined
-    ...inputParams,
-    '-filter_complex', filterCmd,
-    '-map', '[v]',
-    '-map', '[a]',
-    '-vsync', '2',
-    outputPath
-  ]
+    //console.log('params: \n',params);
 
-  console.log('params: \n',params);
-
-  const combineStream = cp.spawn(ffmpeg, params);
-  combineStream.on('message', (msg) => {
-    console.log(STD_MSG, 'combining videos msg: ', msg);
-  });
-  combineStream.on('close', (msg) => {
-    console.log(STD_MSG, 'combining \'closed\' msg: ', msg);
-    resolve(outputPath);
-  });
-  combineStream.on('error', (msg) => {
-    console.log(STD_MSG, 'combining \'error\' msg: ', msg);
-    reject(msg);
-  })
-
+    const combineStream = cp.spawn(ffmpeg, params);
+    combineStream.on('message', (msg) => {
+      console.log(STD_MSG, 'combining videos msg: ', msg);
+    });
+    combineStream.on('close', (msg) => {
+      console.log(STD_MSG, 'combining \'closed\' msg: ', msg);
+      resolve(outputPath);
+    });
+    combineStream.on('error', (msg) => {
+      console.log(STD_MSG, 'combining \'error\' msg: ', msg);
+      reject(msg);
+    });
   });
 }

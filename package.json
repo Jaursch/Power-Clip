@@ -5,9 +5,9 @@
   "main": "service.js",
   "scripts": {
     "start": "nodemon ./server.js",
+    "server": "node ./server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "combination": "node -e 'require(\"./test/videos_test.js\").testCombine()'",
-    "server": "node ./server.js"
+    "combination": "node -e 'require(\"./test/videos_test.js\").testCombine()'"
   },
   "repository": {
     "type": "git",
