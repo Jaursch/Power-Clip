@@ -1,3 +1,4 @@
+const Promise = require('promise');
 const fs = require('fs');
 const ytdl = require('ytdl-core');
 const ffmpeg = require('ffmpeg-static');
@@ -68,48 +69,42 @@ exports.info = async function(url){
  * @returns {string} relative path of downloaded video
  */
 exports.downloadYT = async function(url){
-  let title = '';
-  let path = '';
-  
-  let readStream = null;
-  let writeStream = null;
-
-  try {
-    readStream = ytdl(url);
-    readStream.on('info',(info, format) => {
-                console.log(STREAM_MSG + 'Now Downloading: ' + info.videoDetails.title);
-                title = help.replace(info.videoDetails.title);
-  
-                const fileType = format.container;
-                if(!fs.existsSync('./bin'))
-                  fs.mkdirSync('./bin'); 
-                path = `./bin/${title}.${fileType}`;
-                writeStream = fs.createWriteStream(`./bin/${title}.${fileType}`);
-  
-                readStream.pipe(writeStream);
-              })
-              .on('progress',(_,downloaded,total) =>{
-                const percent = (downloaded/total*100).toFixed(1);
-                if(percent % 5 == 0){ //print log every 5%
-                  readline.cursorTo(process.stdout, 0); //untested
-                  process.stdout.write(`Progress: ${percent}%\t downloaded: ${downloaded}\t total: ${total}`);
-                }if(percent == 100 && path != ''){ //finished
-                  return path;
-                }
-              })
-              .on('error', (err) => {
-                throw err
-              })    
-  } catch (err) {
-    console.error(STD_MSG, "Error during download: ", err);    
-  }
-  stream.finished(readStream, (err) => {
-    if(err){
-      console.error('Stream failed: ', err);
-    }else{
-      console.log('Stream complete');
+  return await new Promise((resolve, reject) => {
+    let title = '';
+    let path = '';
+    
+    try {
+      let readStream = ytdl(url);
+      readStream.on('info',(info, format) => {
+                  console.log(STREAM_MSG + 'Now Downloading: ' + info.videoDetails.title);
+                  title = help.replace(info.videoDetails.title);
+    
+                  const fileType = format.container;
+                  if(!fs.existsSync('./bin'))
+                    fs.mkdirSync('./bin'); 
+                  path = `./bin/${title}.${fileType}`;
+                  let writeStream = fs.createWriteStream(`./bin/${title}.${fileType}`);
+    
+                  readStream.pipe(writeStream);
+                })
+                .on('progress',(_,downloaded,total) =>{
+                  const percent = (downloaded/total*100).toFixed(1);
+                  if(percent % 5 == 0){ //print log every 5%
+                    readline.cursorTo(process.stdout, 0); //untested
+                    process.stdout.write(`Progress: ${percent}%\t downloaded: ${downloaded}\t total: ${total}`);
+                  }if(percent == 100 && path != ''){ //finished
+                    // return path;
+                    resolve(path)
+                  }
+                })
+                .on('error', (err) => {
+                  throw err
+                })    
+    } catch (err) {
+      console.error(STD_MSG, "Error during download: ", err);
+      reject(err)
     }
-  });
+  })
   console.log("inside standard");
 }
 
@@ -329,4 +324,55 @@ exports.combineTwo = async function(index){
   combineStream.on('error', (msg) => {
     console.log(STD_MSG, 'combining \'error\' msg: ', msg);
   })
+}
+
+//Combine array of file together w/ given filepaths
+exports.combine = async function(filepaths, outFileName){
+  await new Promise((resolve, reject) => {
+
+  const outputPath = `./bin/${outFileName}.mp4`;
+  help.deleteIfExists(outputPath);
+
+  const inputParams = [];
+  var filterCmd = '';
+  for(idx in filepaths){
+    inputParams.push('-i',`${filepaths[idx]}`);
+    filterCmd += `[${idx}:v]scale=1920:1080:force_original_aspect_ratio=decrease:eval=frame,pad=1920:1080:-1:-1:color=black,setsar=1[v${idx}],`;
+    //console.log('input params: \n', inputParams);
+    //console.log('filterCmd: \n', filterCmd);
+  }
+  // adding final concat filter mapping
+  for(idx in filepaths){
+    filterCmd += `[v${idx}] [${idx}:a] `;
+  }
+  filterCmd += `concat=n=${filepaths.length}:v=1:a=1 [v] [a]`;
+
+  //console.log(filterCmd);
+
+  const params = [
+    // expanding clip paths to be combined
+    ...inputParams,
+    '-filter_complex', filterCmd,
+    '-map', '[v]',
+    '-map', '[a]',
+    '-vsync', '2',
+    outputPath
+  ]
+
+  console.log('params: \n',params);
+
+  const combineStream = cp.spawn(ffmpeg, params);
+  combineStream.on('message', (msg) => {
+    console.log(STD_MSG, 'combining videos msg: ', msg);
+  });
+  combineStream.on('close', (msg) => {
+    console.log(STD_MSG, 'combining \'closed\' msg: ', msg);
+    resolve(outputPath);
+  });
+  combineStream.on('error', (msg) => {
+    console.log(STD_MSG, 'combining \'error\' msg: ', msg);
+    reject(msg);
+  })
+
+  });
 }

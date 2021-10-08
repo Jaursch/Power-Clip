@@ -1,8 +1,12 @@
-const { json } = require("express");
+const {v4: uuid} = require('uuid')
+const Promise = require('promise')
 const express = require("express");
 const path = require("path");
 const powerclip = require('./service.js');
 const fs = require('fs');
+
+const help = require('./helpers');
+const e = require('express');
 
 const app = express();
 const port = process.env.PORT || "8080";
@@ -79,6 +83,47 @@ app.get("/standard", async (req, res) => {
 		}
 	}
 
+});
+
+async function downloadVideo(url) {
+	return await powerclip.downloadYT(url);
+}
+
+app.post('/compile', async (req, res) => {
+
+		const {urls} = req.body
+		const id = uuid()
+		res.json({ id })
+
+		const filePaths = await Promise.all(urls.map(async (url) => downloadVideo(url)))
+		await powerclip.combine(filePaths, id)
+		// now splice using the filePaths var
+
+
+		// provide uuid for spliced video
+		// after response sent:
+		// for each url, download from YouTube
+		// add each url as a pending download
+		// once all downloads are done, splice together (save as [uuid].mp4)
+		// when user makes request to /download?id={id}, return spliced video
+
+});
+
+app.get('/download', async (req, res) => {
+	const id = req.query.id;
+	const exists = help.exists(`./bin/${id}.mp4`);
+
+	if(!exists){
+		res.status(404).send("video id not found!")
+	}else{
+		res.download(`./bin/${id}.mp4`);
+	}
+})
+
+app.post('/combine', async (req, res) => {
+	const filepaths = ['./bin/Hah_gay.mp4', './bin/Hah_gay.mp4'];
+	const outputPath = await powerclip.combine(filepaths, "endpath");
+	res.json({outputPath});
 });
 
 app.listen(port, () => {
