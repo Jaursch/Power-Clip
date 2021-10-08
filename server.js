@@ -16,12 +16,8 @@ app.get("/", (req, res) => {
 
 app.get("/validate", (req, res) => {
 	console.log("/validate - get");
-	//onsole.log("body: " + JSON.stringify(req.body));
-	if(!Object.keys(req.body).length){
-		res.status(400).send("No body provided");
-	}else if(!req.body.url){
-		res.status(400).send("url needs to be in json format w/ key \"url\"");
-	}else{
+	//console.log("body: " + JSON.stringify(req.body));
+	if(validateJSONbody(req, res)){
 		const url = req.body.url;
 		const valid = powerclip.validate(url);
 
@@ -34,11 +30,7 @@ app.get("/validate", (req, res) => {
 app.get("/info", async (req, res) => {
 	console.log("/info - get");
 
-	if(!Object.keys(req.body).length){
-		res.status(400).send("No body provided");
-	}else if(!req.body.url){
-		res.status(400).send("url needs to be in json format w/ key \"url\"");
-	}else{
+	if(validateJSONbody(req, res)){
 		const url = req.body.url;
 
 		const valid = powerclip.validate(url);
@@ -58,13 +50,33 @@ app.get("/info", async (req, res) => {
 					let info = JSON.parse(data);
 					res.status(200).send(info.videoDetails);
 				}
-			})
+			});
 		}
 	}
+});
+
+app.get("/standard", (req, res) => {
 
 });
 
 app.listen(port, () => {
 	console.log(`Listening to requests on http://localhost:${port}`);
 });
+
+/**
+ * Validates request body. Sends error back if invalid
+ * @param {object} req Request
+ * @param {object} res Response
+ * @returns Returns boolean if body is valid
+ */
+function validateJSONbody(req, res){
+	if(!Object.keys(req.body).length){
+		res.status(400).send("No body provided");
+		return false;
+	}else if(!req.body.url){
+		res.status(400).send("url needs to be in json format w/ key \"url\"");
+		return false;
+	}
+	return true;
+}
 	

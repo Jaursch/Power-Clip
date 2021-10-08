@@ -86,7 +86,7 @@ exports.downloadYT = function(url){
                 const percent = (downloaded/total*100).toFixed(1);
                 if(percent % 5 == 0){ //print log every 5%
                   readline.cursorTo(process.stdout, 0); //untested
-                  console.log(`Progress: ${percent}%\t downloaded: ${downloaded}\t total: ${total}`);
+                  process.stdout.write(`Progress: ${percent}%\t downloaded: ${downloaded}\t total: ${total}`);
                 }if(percent == 100 && path != ''){ //finished
                   return path;
                 }
