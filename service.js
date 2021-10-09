@@ -66,7 +66,6 @@ exports.info = async function(url){
 /**
  * Download youtube video in standard 360p quality
  * @param {string} url  url of valid youtube video
- * @returns {string} relative path of downloaded video
  */
 exports.downloadYT = async function(url){
   return await new Promise((resolve, reject) => {
@@ -98,14 +97,13 @@ exports.downloadYT = async function(url){
                   }
                 })
                 .on('error', (err) => {
-                  throw err
+                  console.error(err);
                 })    
     } catch (err) {
       console.error(STD_MSG, "Error during download: ", err);
       reject(err)
     }
-  })
-  console.log("inside standard");
+  });
 }
 
 /**
@@ -191,13 +189,13 @@ exports.downloadHD = function(url, index){
  * @param {int} startTime index to start new video in seconds
  * @param {int} length duration of new video in seconds
  */
-exports.clipVideo = async function (inputPath, startTime=30.0, length=15) {
+exports.clipVideo = async function (inputPath, startTime=0, length=15) {
   return new Promise((resolve, reject) => {
-
-    let title = inputPath.slice(inputPath.indexOf(OUTPUT_PATH), inputPath.indexOf('.mp4'));
+    let title = inputPath.slice(inputPath.indexOf(OUTPUT_PATH) + OUTPUT_PATH.length, inputPath.indexOf('.mp4'));
     let outputPath = `${OUTPUT_PATH}clip${title}.mp4`;
 
     console.log(STD_MSG, `Clipping from path : ${inputPath}`);
+    console.log(STD_MSG, "title: ", title);
 
     help.deleteIfExists(outputPath);
 

@@ -89,24 +89,38 @@ async function downloadVideo(url) {
 	return await powerclip.downloadYT(url);
 }
 
-app.post('/compile', async (req, res) => {
+async function clipVideo(path, start=0, length=15) {
+	return await powerclip.clipVideo(path, start, length);
+}
 
-		const {urls} = req.body
+/**
+ * We can send a collection of urls
+ * We can send urls & single start time 
+ * send urls & individual start times
+ * 	videos
+ * 		[
+ * 			url
+ * 			start
+ * 			length
+ * 		]
+ */
+
+app.post('/compile', async (req, res) => {
+		// reformat to check if start time & clip length is given
+		console.log(req.body);
+
+		const videos = req.body.videos;
 		const id = uuid()
 		res.json({ id })
 
-		const filePaths = await Promise.all(urls.map(async (url) => downloadVideo(url)))
-		await powerclip.combine(filePaths, id)
+		let filePaths = await Promise.all(videos.map(async (video) => downloadVideo(video.url)));
+		for(let i=0; i<videos.length; i++){
+			videos[i].filePath = filePaths[i];
+		}
+		filePaths = await Promise.all(videos.map(async (video) => clipVideo(video.filePath, video.start, video.length)));
+		let outputPath = await powerclip.combine(filePaths, id);
+		console.log("Combine video complete at: ", outputPath);
 		// now splice using the filePaths var
-
-
-		// provide uuid for spliced video
-		// after response sent:
-		// for each url, download from YouTube
-		// add each url as a pending download
-		// once all downloads are done, splice together (save as [uuid].mp4)
-		// when user makes request to /download?id={id}, return spliced video
-
 });
 
 app.get('/download', async (req, res) => {
@@ -116,14 +130,17 @@ app.get('/download', async (req, res) => {
 	if(!exists){
 		res.status(404).send("video id not found!")
 	}else{
-		res.download(`./bin/${id}.mp4`);
+		res.download(`./bin/${id}.mp4`, 'powerclip.mp4');
 	}
-})
+});
 
-app.post('/combine', async (req, res) => {
-	const filepaths = ['./bin/Hah_gay.mp4', './bin/Hah_gay.mp4'];
-	const outputPath = await powerclip.combine(filepaths, "endpath");
-	res.json({outputPath});
+app.get('/clip', async (req, res) => {
+	const videos = req.body.videos;
+
+	const clipPath = await clipVideo(videos.filePath, videos.start, videos.length);
+	console.log(clipPath);
+
+	res.send(clipPath);
 });
 
 app.listen(port, () => {
