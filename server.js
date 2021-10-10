@@ -109,7 +109,7 @@ async function clipVideo(path, start=0, length=15) {
 
 app.post('/compile', async (req, res) => {
 		// reformat to check if start time & clip length is given
-		console.log(req.body);
+		//console.log(req.body);
 
 		const videos = req.body.videos;
 		const id = uuid();
