@@ -82,6 +82,7 @@ exports.downloadYT = async function(url){
                   if(!fs.existsSync('./bin'))
                     fs.mkdirSync('./bin'); 
                   path = `./bin/${title}.${fileType}`;
+                  help.deleteIfExists(path);
                   let writeStream = fs.createWriteStream(`./bin/${title}.${fileType}`);
     
                   readStream.pipe(writeStream);
@@ -93,7 +94,7 @@ exports.downloadYT = async function(url){
                     process.stdout.write(`Progress: ${percent}%\t downloaded: ${downloaded}\t total: ${total}`);
                   }if(percent == 100 && path != ''){ //finished
                     // return path;
-                    resolve(path)
+                    resolve(path);
                   }
                 })
                 .on('error', (err) => {
@@ -190,13 +191,12 @@ exports.downloadHD = function(url, index){
  * @param {int} length duration of new video in seconds
  */
 exports.clipVideo = async function (inputPath, startTime=0, length=15) {
-  return new Promise((resolve, reject) => {
+  return await new Promise((resolve, reject) => {
     let title = inputPath.slice(inputPath.indexOf(OUTPUT_PATH) + OUTPUT_PATH.length, inputPath.indexOf('.mp4'));
     let outputPath = `${OUTPUT_PATH}clip${title}.mp4`;
 
-    console.log(STD_MSG, `Clipping from path : ${inputPath}`);
-    console.log(STD_MSG, "title: ", title);
-
+    // console.log(STD_MSG, `Clipping from path : ${inputPath}`);
+    // console.log(STD_MSG, "title: ", title);
     help.deleteIfExists(outputPath);
 
     try{
@@ -330,7 +330,7 @@ exports.combineTwo = async function(){
 
 //Combine array of file together w/ given filepaths
 exports.combine = async function(filepaths, outFileName){
-  await new Promise((resolve, reject) => {
+  return await new Promise((resolve, reject) => {
     const outputPath = `./bin/${outFileName}.mp4`;
     help.deleteIfExists(outputPath);
 
@@ -345,7 +345,6 @@ exports.combine = async function(filepaths, outFileName){
       filterCmd += `[v${idx}] [${idx}:a] `;
     }
     filterCmd += `concat=n=${filepaths.length}:v=1:a=1 [v] [a]`;
-
     //console.log(filterCmd);
 
     const params = [
@@ -356,21 +355,23 @@ exports.combine = async function(filepaths, outFileName){
       '-map', '[a]',
       '-vsync', '2',
       outputPath
-    ]
-
+    ];
     //console.log('params: \n',params);
 
     const combineStream = cp.spawn(ffmpeg, params);
-    combineStream.on('message', (msg) => {
-      console.log(STD_MSG, 'combining videos msg: ', msg);
+    combineStream.stdout.on('data', (data) => {
+      console.log(STD_MSG, 'combining stdout data: ', data);
+    });
+    combineStream.on('error', (err) => {
+      reject(err);
     });
     combineStream.on('close', (msg) => {
-      console.log(STD_MSG, 'combining \'closed\' msg: ', msg);
-      resolve(outputPath);
-    });
-    combineStream.on('error', (msg) => {
-      console.log(STD_MSG, 'combining \'error\' msg: ', msg);
-      reject(msg);
-    });
+      if(msg === 0){
+        resolve(outputPath);
+      }else{
+        console.error(STD_MSG, 'Error combining video');
+        reject();
+      }
+    });  
   });
 }

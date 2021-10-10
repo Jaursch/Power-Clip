@@ -4,12 +4,15 @@ const express = require("express");
 const path = require("path");
 const powerclip = require('./service.js');
 const fs = require('fs');
+const mailer = require('nodemailer');
 
 const help = require('./helpers');
 const e = require('express');
 
 const app = express();
 const port = process.env.PORT || "8080";
+
+// Nodemailer account info
 
 app.use(express.json());
 
@@ -20,7 +23,6 @@ app.get("/", (req, res) => {
 
 app.get("/validate", (req, res) => {
 	console.log("/validate - get");
-	//console.log("body: " + JSON.stringify(req.body));
 	if(validateJSONbody(req, res)){
 		const url = req.body.url;
 		const valid = powerclip.validate(url);
@@ -110,17 +112,48 @@ app.post('/compile', async (req, res) => {
 		console.log(req.body);
 
 		const videos = req.body.videos;
-		const id = uuid()
-		res.json({ id })
+		const id = uuid();
+		res.json({ id });
 
+		// Download Videos, Clip & Combine
 		let filePaths = await Promise.all(videos.map(async (video) => downloadVideo(video.url)));
 		for(let i=0; i<videos.length; i++){
 			videos[i].filePath = filePaths[i];
 		}
 		filePaths = await Promise.all(videos.map(async (video) => clipVideo(video.filePath, video.start, video.length)));
-		let outputPath = await powerclip.combine(filePaths, id);
+		const outputPath = await powerclip.combine(filePaths, id);
 		console.log("Combine video complete at: ", outputPath);
-		// now splice using the filePaths var
+
+		// Now notify the user that their video is complete!
+		if(req.body.email){
+			const mailacct = await mailer.createTestAccount();
+			const transporter = await mailer.createTransport({
+				host: "smtp.ethereal.email",
+				port: 587,
+				secure: false, // true for 465, false for other ports
+				auth: {
+				user: mailacct.user,
+				pass: mailacct.pass
+				}
+			});
+
+			const mailData = {
+				from: '"PowerClip" <notifications@powerclip.com>',
+				to: req.body.email,
+				subject: "Your video is ready!",
+				text: `Your PowerClip is ready! \nYour video id is: ${id}. Use the following request to download your video: http://localhost:${port}/download?id=${id}`
+			};
+			await transporter.sendMail(mailData, (err, info) => {
+				if(err){
+					console.error(err);
+				}else{
+					console.log('Email Sent!');
+					//console.log(info);
+				}
+			});
+		}else{
+			console.log("No email address included. No notification email will be sent.");
+		}
 });
 
 app.get('/download', async (req, res) => {
@@ -146,7 +179,6 @@ app.get('/clip', async (req, res) => {
 app.listen(port, () => {
 	console.log(`Listening to requests on http://localhost:${port}`);
 });
-
 /**
  * Validates request body. Sends error back if invalid
  * @param {object} req Request

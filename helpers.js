@@ -20,9 +20,8 @@ exports.cleanBin = function(){
 exports.deleteIfExists = function(path){
   try{
     if(fs.existsSync(path)){
-      console.log(STD_MSG, `Deleting file at: ${path}`);
       fs.unlinkSync(path);
-      console.log(STD_MSG, path + ' deleted')
+      console.log(STD_MSG, `File at ${path} deleted`);
     }
   }catch(err){
     console.error('ERR - deleteIfExists: ' + err);
@@ -55,15 +54,6 @@ exports.waitTillAllDownloaded = async function(){
     }
     checkAllDownloaded();
   });
-  /*for(var i=0; i<videos.count(); i++){
-    if(videos.getVideoPath(i) == false){
-      console.log(`video ${i} not ready`);
-      setTimeout(exports.waitTillAllDownloaded, 5000);
-      break;
-    }else{
-      console.log(`video ${i} ready: ${videos.getVideoPath(i)}`);
-    }
-  }*/
 }
 
 exports.waitTillReady = async function(){
