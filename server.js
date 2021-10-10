@@ -143,7 +143,7 @@ app.post('/compile', async (req, res) => {
 				subject: "Your video is ready!",
 				text: `Your PowerClip is ready! \nYour video id is: ${id}. Use the following request to download your video: http://localhost:${port}/download?id=${id}`
 			};
-			await transporter.sendMail(mailData, (err, info) => {
+			transporter.sendMail(mailData, (err, info) => {
 				if(err){
 					console.error(err);
 				}else{
