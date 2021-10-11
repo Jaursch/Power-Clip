@@ -87,8 +87,12 @@ app.get("/standard", async (req, res) => {
 
 });
 
-async function downloadVideo(url) {
-	return await powerclip.downloadYT(url);
+async function downloadVideo(url, hd) {
+	if(hd == true){
+		return await powerclip.downloadHD(url);
+	}else{
+		return await powerclip.downloadYT(url);
+	}
 }
 
 async function clipVideo(path, start=0, length=15) {
@@ -106,7 +110,6 @@ async function clipVideo(path, start=0, length=15) {
  * 			length
  * 		]
  */
-
 app.post('/compile', async (req, res) => {
 		// reformat to check if start time & clip length is given
 		//console.log(req.body);
@@ -116,7 +119,8 @@ app.post('/compile', async (req, res) => {
 		res.json({ id });
 
 		// Download Videos, Clip & Combine
-		let filePaths = await Promise.all(videos.map(async (video) => downloadVideo(video.url)));
+		let hd = req.body.hd? req.body.hd : false;
+		let filePaths = await Promise.all(videos.map(async (video) => downloadVideo(video.url, hd)));
 		for(let i=0; i<videos.length; i++){
 			videos[i].filePath = filePaths[i];
 		}
