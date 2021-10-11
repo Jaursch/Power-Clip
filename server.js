@@ -68,11 +68,25 @@ app.get("/standard", async (req, res) => {
 		if(!powerclip.validate(url)){
 			res.status(400).send(`'${url}' is not a valid YouTube url`);
 		}else{ 
-			let hd = req.body.hd? req.body.hd : false;
+			let id = uuid();
+			res.json({id});
+
+      let hd = req.body.hd? req.body.hd : false;
 			// download video
 			let path = await downloadVideo(url, hd);
 
-			console.log("path value: " + path);
+			// rename file to use given uuid
+			let newpath = `./bin/${id}.mp4`;
+			fs.renameSync(path, newpath);
+
+			// Now notify the user that their video is complete!
+			if(req.body.email){
+				sendEmail(req.body.email, id);
+			}else{
+				console.log("No email address included. No notification email will be sent.");
+			}
+
+			//rename file at "path" to UUID
 
 			// once path is given, return video
 			/*res.status(200).download(path, 'video.mp4', (err) => {
@@ -131,28 +145,7 @@ app.post('/compile', async (req, res) => {
 
 		// Now notify the user that their video is complete!
 		if(req.body.email){
-			const transporter = mailer.createTransport({
-				service: 'gmail',
-				auth: {
-					user: 'powerclipvideos@gmail.com',
-					pass: 'powerclip2021'
-				}
-			});
-			
-			const mailData = {
-				from: '"PowerClip" <notifications@powerclip.com>',
-				to: "'Burton Jaursch' <burton.jaursch@gmail.com>",
-				subject: "Your video is ready!",
-				// text: `Your PowerClip is ready! \nYour video id is: blank. Use the following request to download your video: `,
-				html: `<p><b>Your PowerClip is ready!</b> \nYour video id is: ${id}. Use the following request to download your video: http://localhost:8080/download?id=${id}</p>`
-			};
-			transporter.sendMail(mailData, (err, info) => {
-				if(err){
-					console.error(err);
-				}else{
-					console.log('Email Sent!');
-				}
-			});	
+			sendEmail(req.body.email, id);
 		}else{
 			console.log("No email address included. No notification email will be sent.");
 		}
@@ -197,4 +190,30 @@ function validateJSONbody(req, res){
 	}
 	return true;
 }
+
+function sendEmail(address, id){
+	const transporter = mailer.createTransport({
+		service: 'gmail',
+		auth: {
+			user: 'powerclipvideos@gmail.com',
+			pass: 'powerclip2021'
+		}
+	});
+	
+	const mailData = {
+		from: '"PowerClip" <notifications@powerclip.com>',
+		to: address,
+		subject: "Your video is ready!",
+		// text: `Your PowerClip is ready! \nYour video id is: blank. Use the following request to download your video: `,
+		html: `<p><b>Your PowerClip is ready!</b> \nYour video id is: ${id}. Use the following request to download your video: http://localhost:8080/download?id=${id}</p>`
+	};
+	transporter.sendMail(mailData, (err, info) => {
+		if(err){
+			console.error(err);
+		}else{
+			console.log('Email Sent!');
+		}
+	});	
+}
+
 	
