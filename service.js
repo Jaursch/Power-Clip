@@ -93,6 +93,7 @@ exports.downloadYT = async function(url){
                     readline.cursorTo(process.stdout, 0); //untested
                     process.stdout.write(`Progress: ${percent}%\t downloaded: ${downloaded}\t total: ${total}`);
                   }if(percent == 100 && path != ''){ //finished
+                    console.log("\n");
                     // return path;
                     resolve(path);
                   }

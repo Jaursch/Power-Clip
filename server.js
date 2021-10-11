@@ -72,9 +72,20 @@ app.get("/standard", async (req, res) => {
 			res.json({id});
 
 			// download video
-			let path = powerclip.downloadYT(url);
+			let path = await powerclip.downloadYT(url);
 
-			console.log("path value: " + path);
+			// rename file to use given uuid
+			let newpath = `./bin/${id}.mp4`;
+			fs.renameSync(path, newpath);
+
+			// Now notify the user that their video is complete!
+			if(req.body.email){
+				sendEmail(req.body.email, id);
+			}else{
+				console.log("No email address included. No notification email will be sent.");
+			}
+
+			
 
 			//rename file at "path" to UUID
 
