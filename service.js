@@ -78,12 +78,12 @@ exports.downloadYT = async function(url){
                   console.log(STREAM_MSG + 'Now Downloading: ' + info.videoDetails.title);
                   title = help.replace(info.videoDetails.title);
     
-                  const fileType = format.container;
+                  // const fileType = format.container;
                   if(!fs.existsSync('./bin'))
                     fs.mkdirSync('./bin'); 
-                  path = `./bin/${title}.${fileType}`;
+                  path = `./bin/${title}.mp4`;
                   help.deleteIfExists(path);
-                  let writeStream = fs.createWriteStream(`./bin/${title}.${fileType}`);
+                  let writeStream = fs.createWriteStream(path);
     
                   readStream.pipe(writeStream);
                 })

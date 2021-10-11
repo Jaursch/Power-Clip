@@ -61,7 +61,7 @@ app.get("/info", async (req, res) => {
 	}
 });
 
-app.get("/standard", async (req, res) => {
+app.post("/standard", async (req, res) => {
 	console.log("/standard - get");
 	if(validateJSONbody(req, res)){
 		const url = req.body.url;
@@ -71,7 +71,7 @@ app.get("/standard", async (req, res) => {
 			let id = uuid();
 			res.json({id});
 
-      let hd = req.body.hd? req.body.hd : false;
+      		let hd = req.body.hd? req.body.hd : false;
 			// download video
 			let path = await downloadVideo(url, hd);
 
@@ -79,24 +79,14 @@ app.get("/standard", async (req, res) => {
 			let newpath = `./bin/${id}.mp4`;
 			fs.renameSync(path, newpath);
 
+			console.log("Video complete at: ", newpath);
+
 			// Now notify the user that their video is complete!
 			if(req.body.email){
 				sendEmail(req.body.email, id);
 			}else{
 				console.log("No email address included. No notification email will be sent.");
 			}
-
-			//rename file at "path" to UUID
-
-			// once path is given, return video
-			/*res.status(200).download(path, 'video.mp4', (err) => {
-				if(err){
-					console.error("error with standard download: " + err);
-					return;
-				}else{
-					console.log("standard download successful");
-				}
-			});*/
 		}
 	}
 
@@ -133,6 +123,7 @@ app.post('/compile', async (req, res) => {
 		const id = uuid();
 		res.json({ id });
 
+		const startTime = Date.now();
 		// Download Videos, Clip & Combine
 		let hd = req.body.hd? req.body.hd : false;
 		let filePaths = await Promise.all(videos.map(async (video) => downloadVideo(video.url, hd)));
@@ -142,6 +133,7 @@ app.post('/compile', async (req, res) => {
 		filePaths = await Promise.all(videos.map(async (video) => clipVideo(video.filePath, video.start, video.length)));
 		const outputPath = await powerclip.combine(filePaths, id);
 		console.log("Combine video complete at: ", outputPath);
+		console.log("Total Completion Time: ", parseInt((Date.now()-startTime) / 1000 ), " seconds");
 
 		// Now notify the user that their video is complete!
 		if(req.body.email){
