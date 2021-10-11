@@ -118,7 +118,6 @@ exports.downloadYT = async function(url){
 
     try{
       ytdl.getBasicInfo(url).then((info) => {
-        console.log(info.videoDetails.title);
         // Get audio and video streams
         const audio = ytdl(url, { quality: 'highestaudio' });
         const video = ytdl(url, { quality: 'highestvideo' });
