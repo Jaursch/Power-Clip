@@ -68,8 +68,9 @@ app.get("/standard", async (req, res) => {
 		if(!powerclip.validate(url)){
 			res.status(400).send(`'${url}' is not a valid YouTube url`);
 		}else{ 
+			let hd = req.body.hd? req.body.hd : false;
 			// download video
-			let path = powerclip.downloadYT(url);
+			let path = await downloadVideo(url, hd);
 
 			console.log("path value: " + path);
 

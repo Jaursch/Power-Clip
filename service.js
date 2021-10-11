@@ -117,18 +117,18 @@ exports.downloadYT = async function(url){
     let title = '';
 
     try{
-      // Get audio and video streams
-      const audio = ytdl(url, { quality: 'highestaudio' });
-      const video = ytdl(url, { quality: 'highestvideo' });
+      ytdl.getBasicInfo(url).then((info) => {
+        console.log(info.videoDetails.title);
+        // Get audio and video streams
+        const audio = ytdl(url, { quality: 'highestaudio' });
+        const video = ytdl(url, { quality: 'highestvideo' });
 
-      audio.on('info', (info, format) => {
         console.log(STREAM_MSG + 'Now Downloading: ' + info.videoDetails.title);
         title = help.replace(info.videoDetails.title);
 
-        const fileType = format.container;
         if(!fs.existsSync('./bin'))
           fs.mkdirSync('./bin'); 
-        path = `./bin/${title}.${fileType}`;
+        path = `./bin/${title}.mp4`;
         help.deleteIfExists(path);
     
         // Start the ffmpeg child process
