@@ -148,6 +148,7 @@ app.post('/compile', async (req, res) => {
 					console.error(err);
 				}else{
 					console.log('Email Sent!');
+					console.log(mailer.getTestMessageUrl(info));
 					//console.log(info);
 				}
 			});
