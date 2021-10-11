@@ -126,32 +126,28 @@ app.post('/compile', async (req, res) => {
 
 		// Now notify the user that their video is complete!
 		if(req.body.email){
-			const mailacct = await mailer.createTestAccount();
-			const transporter = await mailer.createTransport({
-				host: "smtp.ethereal.email",
-				port: 587,
-				secure: false, // true for 465, false for other ports
+			const transporter = mailer.createTransport({
+				service: 'gmail',
 				auth: {
-				user: mailacct.user,
-				pass: mailacct.pass
+					user: 'powerclipvideos@gmail.com',
+					pass: 'powerclip2021'
 				}
 			});
-
+			
 			const mailData = {
 				from: '"PowerClip" <notifications@powerclip.com>',
-				to: req.body.email,
+				to: "'Burton Jaursch' <burton.jaursch@gmail.com>",
 				subject: "Your video is ready!",
-				text: `Your PowerClip is ready! \nYour video id is: ${id}. Use the following request to download your video: http://localhost:${port}/download?id=${id}`
+				// text: `Your PowerClip is ready! \nYour video id is: blank. Use the following request to download your video: `,
+				html: `<p><b>Your PowerClip is ready!</b> \nYour video id is: ${id}. Use the following request to download your video: http://localhost:8080/download?id=${id}</p>`
 			};
 			transporter.sendMail(mailData, (err, info) => {
 				if(err){
 					console.error(err);
 				}else{
 					console.log('Email Sent!');
-					console.log(mailer.getTestMessageUrl(info));
-					//console.log(info);
 				}
-			});
+			});	
 		}else{
 			console.log("No email address included. No notification email will be sent.");
 		}
