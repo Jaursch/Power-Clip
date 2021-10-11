@@ -110,10 +110,78 @@ exports.downloadYT = async function(url){
 /**
  * Download youtube video in highest quality available
  * @param {string} url 
+ */
+ exports.downloadHD = async function(url){
+   return await new Promise((resolve, reject) => {
+    let path = '';
+    let title = '';
+
+    try{
+      // Get audio and video streams
+      const audio = ytdl(url, { quality: 'highestaudio' });
+      const video = ytdl(url, { quality: 'highestvideo' });
+
+      audio.on('info', (info, format) => {
+        console.log(STREAM_MSG + 'Now Downloading: ' + info.videoDetails.title);
+        title = help.replace(info.videoDetails.title);
+
+        const fileType = format.container;
+        if(!fs.existsSync('./bin'))
+          fs.mkdirSync('./bin'); 
+        path = `./bin/${title}.${fileType}`;
+        help.deleteIfExists(path);
+    
+        // Start the ffmpeg child process
+        const ffmpegProcess = cp.spawn(ffmpeg, [
+          // Remove ffmpeg's console spamming
+          '-loglevel', '8', '-hide_banner',
+          // Redirect/Enable progress messages
+          '-progress', 'pipe:3',
+          // Set inputs
+          '-i', 'pipe:4',
+          '-i', 'pipe:5',
+          // Map audio & video from streams
+          '-map', '0:a',
+          '-map', '1:v',
+          // Keep encoding
+          '-c:v', 'copy',
+          // Define output file
+          path,
+        ], {
+          windowsHide: true,
+          stdio: [
+            /* Standard: stdin, stdout, stderr */
+            'inherit', 'inherit', 'inherit',
+            /* Custom: pipe:3, pipe:4, pipe:5 */
+            'pipe', 'pipe', 'pipe',
+          ],
+        });
+        ffmpegProcess.on('close', () => {  
+          resolve(path);
+        });
+        ffmpegProcess.on('error', (err) => {
+          reject(err);
+        })
+      
+        // Link streams
+        audio.pipe(ffmpegProcess.stdio[4]);
+        video.pipe(ffmpegProcess.stdio[5]);    
+      });
+    }catch(err){
+      console.error(STD_MSG, "Error during HD download: ", err);
+      reject(err);
+    }
+   });
+}
+
+
+/**
+ * Download youtube video in highest quality available for Powerclip script
+ * @param {string} url 
  * @param {int} index 
  * @returns {string} relative path of downloaded video
  */
-exports.downloadHD = function(url, index){
+exports.downloadHDScript = function(url, index){
   !(index==null)? null:index=00;
   let path = `${OUTPUT_PATH}out${index}.mp4`;
 

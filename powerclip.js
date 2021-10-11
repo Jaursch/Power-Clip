@@ -41,7 +41,7 @@ case 'clip':
 case 'hd':
   var url = promptURL();
 
-  s.downloadHD(url);
+  s.downloadHDScript(url);
   break;
 default:
   console.log('We are now going to combine two clipped YouTube videos');
