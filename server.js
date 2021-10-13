@@ -143,6 +143,9 @@ app.post('/compile', async (req, res) => {
 		}
 });
 
+/**
+ * 
+ */
 app.get('/download', async (req, res) => {
 	const id = req.query.id;
 	const exists = help.exists(`./bin/${id}.mp4`);
@@ -183,6 +186,11 @@ function validateJSONbody(req, res){
 	return true;
 }
 
+/**
+ * Sends email to announce video is ready for download
+ * @param {string} address email address to send completed video link
+ * @param {string} id UUID for the completed video
+ */
 function sendEmail(address, id){
 	const transporter = mailer.createTransport({
 		service: 'gmail',
