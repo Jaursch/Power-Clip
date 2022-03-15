@@ -43,6 +43,10 @@ exports.validate = function (url){
   return ytdl.validateURL(url)
 }
 
+exports.getInfo = async function(url){
+   return await ytdl.getBasicInfo(url);
+}
+
 //gets the info of a valid YT link and stores json return value in a file
 exports.info = async function(url){
   const info = await ytdl.getBasicInfo(url);
