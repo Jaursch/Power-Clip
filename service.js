@@ -72,34 +72,33 @@ exports.info = async function(url){
  * @param {string} url  url of valid youtube video
  */
 exports.downloadYT = async function(url){
+  let info = await exports.getInfo(url); //still fucked fix this shit. dont download if exists
+  let title = help.replace(info.videoDetails.title);
+
   return await new Promise((resolve, reject) => {
-    let title = '';
-    let path = '';
+    if(!fs.existsSync('./bin'))
+      fs.mkdirSync('./bin'); 
+    let path = `./bin/${title}.mp4`;
     
     try {
+      if(help.exists(path)) { console.log(`${STD_MSG} ${title} already downloaded`); return resolve(path); }
       let readStream = ytdl(url);
       readStream.on('info',(info, format) => {
-                  console.log(STREAM_MSG + 'Now Downloading: ' + info.videoDetails.title);
-                  title = help.replace(info.videoDetails.title);
     
-                  // const fileType = format.container;
-                  if(!fs.existsSync('./bin'))
-                    fs.mkdirSync('./bin'); 
-                  path = `./bin/${title}.mp4`;
-                  help.deleteIfExists(path);
-                  let writeStream = fs.createWriteStream(path);
-    
+                  
+                  console.log(STREAM_MSG + 'Now Downloading: ' + title);
+                  let writeStream = fs.createWriteStream(path);    
                   readStream.pipe(writeStream);
                 })
                 .on('progress',(_,downloaded,total) =>{
                   const percent = (downloaded/total*100).toFixed(1);
                   if(percent % 5 == 0){ //print log every 5%
                     readline.cursorTo(process.stdout, 0); //untested
-                    process.stdout.write(`Progress: ${percent}%\t downloaded: ${downloaded}\t total: ${total}`);
+                    process.stdout.write(`Progress: ${percent}%\t downloaded: ${downloaded}\t total: ${total}; (${title})`);
                   }if(percent == 100 && path != ''){ //finished
                     console.log("\n");
                     // return path;
-                    resolve(path);
+                    return resolve(path);
                   }
                 })
                 .on('error', (err) => {
@@ -127,14 +126,14 @@ exports.downloadYT = async function(url){
         const audio = ytdl(url, { quality: 'highestaudio' });
         const video = ytdl(url, { quality: 'highestvideo' });
 
-        console.log(STREAM_MSG + 'Now Downloading: ' + info.videoDetails.title);
         title = help.replace(info.videoDetails.title);
 
         if(!fs.existsSync('./bin'))
           fs.mkdirSync('./bin'); 
         path = `./bin/${title}.mp4`;
-        help.deleteIfExists(path);
-    
+        if(help.exists(path)) { console.log(`${STD_MSG} ${title} already downloaded`); return resolve(path); }
+
+        console.log(STREAM_MSG + 'Now Downloading: ' + info.videoDetails.title);
         // Start the ffmpeg child process
         const ffmpegProcess = cp.spawn(ffmpeg, [
           // Remove ffmpeg's console spamming
@@ -161,10 +160,10 @@ exports.downloadYT = async function(url){
           ],
         });
         ffmpegProcess.on('close', () => {  
-          resolve(path);
+          return resolve(path);
         });
         ffmpegProcess.on('error', (err) => {
-          reject(err);
+          return reject(err);
         })
       
         // Link streams
@@ -173,7 +172,7 @@ exports.downloadYT = async function(url){
       });
     }catch(err){
       console.error(STD_MSG, "Error during HD download: ", err);
-      reject(err);
+      return reject(err);
     }
    });
 }
@@ -269,7 +268,7 @@ exports.clipVideo = async function (inputPath, startTime=0, length=15) {
 
     // console.log(STD_MSG, `Clipping from path : ${inputPath}`);
     // console.log(STD_MSG, "title: ", title);
-    help.deleteIfExists(outputPath);
+    if(help.exists(outputPath)) { console.log(`${STD_MSG} ${title} already clipped`); return resolve(outputPath); }
 
     try{
       const ffmpegProcess = cp.spawn(ffmpeg, [
@@ -291,11 +290,11 @@ exports.clipVideo = async function (inputPath, startTime=0, length=15) {
       });
       ffmpegProcess.on('close', () => {
         console.log(STD_MSG, 'clipping done for path: ', outputPath);
-        resolve(outputPath);
+        return resolve(outputPath);
       });
     }catch(err){
       console.error(err);
-      reject(err);
+      return reject(err);
     }
   }); 
 }
@@ -426,23 +425,31 @@ exports.combine = async function(filepaths, outFileName){
       '-map', '[v]',
       '-map', '[a]',
       '-vsync', '2',
+      '-report',
       outputPath
     ];
-    //console.log('params: \n',params);
+    console.log('params: \n',params);
 
     const combineStream = cp.spawn(ffmpeg, params);
     combineStream.stdout.on('data', (data) => {
       console.log(STD_MSG, 'combining stdout data: ', data);
     });
+    combineStream.on('message', (message) => {
+      console.log(STD_MSG, 'combining stdout message: ', message);
+    });
+    combineStream.on('exit', (code, signal) => {
+      console.log(`stream ended with code ${code} & signal ${signal}`);
+    })
     combineStream.on('error', (err) => {
+      console.error(`err combine: ${err}`);
       reject(err);
     });
     combineStream.on('close', (msg) => {
       if(msg === 0){
-        resolve(outputPath);
+        return resolve(outputPath);
       }else{
         console.error(STD_MSG, 'Error combining video');
-        reject();
+        return reject();
       }
     });  
   });

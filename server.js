@@ -130,7 +130,9 @@ app.post('/compile', async (req, res) => {
 		for(let i=0; i<videos.length; i++){
 			videos[i].filePath = filePaths[i];
 		}
+		console.log("Downloading Complete For All Videos");
 		filePaths = await Promise.all(videos.map(async (video) => clipVideo(video.filePath, video.start, video.length)));
+		console.log("Clipping Complete For All Videos");
 		const outputPath = await powerclip.combine(filePaths, id);
 		console.log("Combine video complete at: ", outputPath);
 		console.log("Total Completion Time: ", parseInt((Date.now()-startTime) / 1000 ), " seconds");
