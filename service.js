@@ -102,6 +102,7 @@ exports.downloadYT = async function(url){
                   }
                 })
                 .on('error', (err) => {
+                  help.deleteIfExists(path);
                   console.error(err);
                 })    
     } catch (err) {
@@ -163,6 +164,7 @@ exports.downloadYT = async function(url){
           return resolve(path);
         });
         ffmpegProcess.on('error', (err) => {
+          help.deleteIfExists(path);
           return reject(err);
         })
       
@@ -273,10 +275,12 @@ exports.clipVideo = async function (inputPath, startTime=0, length=15) {
     try{
       const ffmpegProcess = cp.spawn(ffmpeg, [
         '-y',
+        '-r', '30', // Hardset framerate to 30fps
         '-ss', startTime,
         '-i', inputPath,
         '-t', length,
         '-b:a', '192K',
+        '-acodec', 'aac', // Force audio codec to AAC (best for MP4)
         '-nostdin',
         //output file
         outputPath
@@ -422,9 +426,14 @@ exports.combine = async function(filepaths, outFileName){
       // expanding clip paths to be combined
       ...inputParams,
       '-filter_complex', filterCmd,
+      // Map Video & Audio
       '-map', '[v]',
       '-map', '[a]',
+      // Better syncing
       '-vsync', '2',
+      // Explicit multithreading
+      '-threads', '4',
+      // Logging
       '-report',
       outputPath
     ];
