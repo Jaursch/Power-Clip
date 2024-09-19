@@ -1,6 +1,9 @@
 #Added Files
 .DS_Store
+.vscode
+
 bin/*
+cmd.txt
 
 #Below is standard node.js gitignore
 # Logs
