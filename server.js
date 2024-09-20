@@ -71,7 +71,7 @@ app.post("/standard", async (req, res) => {
 			let id = uuid();
 			res.json({id});
 
-      		let hd = req.body.hd? req.body.hd : false;
+      		let hd = req.body.hd || false;
 			// download video
 			let path = await downloadVideo(url, hd);
 

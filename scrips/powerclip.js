@@ -1,8 +1,8 @@
 const prompt = require('prompt-sync')();
 const fs = require('fs');
-const s = require('./service');
-const help = require('./helpers');
-const videos = require('./videos');
+const s = require('../service');
+const help = require('../helpers');
+const videos = require('../videos');
 
 const STD_MSG = '[MSG powerclip] ';
 

@@ -1,6 +1,6 @@
 const prompt = require('prompt-sync')();
 const fs = require('fs');
-const s = require('./service');
+const s = require('../service');
 
 console.log("Adding files to bin/list.json")
 
